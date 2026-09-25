@@ -1,0 +1,112 @@
+[gd_scene format=3 uid="uid://dl57kyin6janx"]
+
+[ext_resource type="Script" uid="uid://cad6qitfkpwp1" path="res://Scenes/Game.cs" id="1_gl6un"]
+[ext_resource type="Script" uid="uid://tq85ggicxdtl" path="res://Scripts/PauseMenu.cs" id="1_iukft"]
+[ext_resource type="StyleBox" uid="uid://b0hsbiqif3hyt" path="res://Style/VolumeSlider.tres" id="3_kldst"]
+[ext_resource type="StyleBox" uid="uid://bsye721jo6b5a" path="res://Style/Grabber.tres" id="4_b2bpf"]
+
+[node name="Game" type="Node2D" unique_id=1626613144]
+script = ExtResource("1_gl6un")
+
+[node name="PauseMenu" type="Control" parent="." unique_id=1735288786]
+process_mode = 2
+visible = false
+layout_mode = 3
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1920.0
+offset_bottom = 1080.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_iukft")
+
+[node name="ColorRect" type="ColorRect" parent="PauseMenu" unique_id=35882380]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.22745098)
+
+[node name="PausePanel" type="Panel" parent="PauseMenu" unique_id=1629161762]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -560.0
+offset_top = -389.0
+offset_right = 560.0
+offset_bottom = 389.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ContinueButton" type="Button" parent="PauseMenu/PausePanel" unique_id=473806532]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -30.0
+offset_right = 150.0
+offset_bottom = 30.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SettingsButton" type="Button" parent="PauseMenu/PausePanel" unique_id=2013014298]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -147.0
+offset_top = 82.0
+offset_right = 153.0
+offset_bottom = 142.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainMenuButton" type="Button" parent="PauseMenu/PausePanel" unique_id=764261989]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -147.0
+offset_top = 192.0
+offset_right = 153.0
+offset_bottom = 252.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SettingsPanel" type="Panel" parent="PauseMenu" unique_id=1238347348]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VolumeSlider" type="HSlider" parent="PauseMenu/SettingsPanel" unique_id=1950095661]
+custom_minimum_size = Vector2(1000, 100)
+layout_mode = 0
+offset_left = 176.0
+offset_top = 149.0
+offset_right = 1676.0
+offset_bottom = 249.0
+theme_override_styles/slider = ExtResource("3_kldst")
+theme_override_styles/grabber_area = ExtResource("4_b2bpf")
+theme_override_styles/grabber_area_highlight = ExtResource("4_b2bpf")
+value = 50.0
+
+[node name="BackButton" type="Button" parent="PauseMenu/SettingsPanel" unique_id=1157779235]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0

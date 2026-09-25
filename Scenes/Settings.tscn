@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://bpbp3qmb71ubj"]
+
+[ext_resource type="Script" uid="uid://rwib3oh3folw" path="res://Scripts/Settings.cs" id="1_4hxq3"]
+[ext_resource type="StyleBox" uid="uid://b0hsbiqif3hyt" path="res://Style/VolumeSlider.tres" id="2_flfri"]
+[ext_resource type="StyleBox" uid="uid://bsye721jo6b5a" path="res://Style/Grabber.tres" id="3_yrknh"]
+
+[node name="Settings" type="Control" unique_id=182393577]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_4hxq3")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1882972165]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BackButton" type="Button" parent="." unique_id=1403156893]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -483.0
+offset_top = -181.0
+offset_right = -183.0
+offset_bottom = -121.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="VolumeSlider" type="HSlider" parent="." unique_id=1794340439]
+custom_minimum_size = Vector2(1000, 100)
+layout_mode = 0
+offset_left = 176.0
+offset_top = 149.0
+offset_right = 1676.0
+offset_bottom = 249.0
+theme_override_styles/slider = ExtResource("2_flfri")
+theme_override_styles/grabber_area = ExtResource("3_yrknh")
+theme_override_styles/grabber_area_highlight = ExtResource("3_yrknh")
+value = 50.0
