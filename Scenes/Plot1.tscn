@@ -1,0 +1,75 @@
+[gd_scene format=3 uid="uid://cqrwmqb3jtsp0"]
+
+[ext_resource type="Script" uid="uid://ds2jfsm3a4f6v" path="res://Scripts/Plot1.cs" id="1_hfrk3"]
+[ext_resource type="Texture2D" uid="uid://dww642viy2q2r" path="res://Image/Plot/G1.jpg" id="2_nwe3t"]
+[ext_resource type="Texture2D" uid="uid://ry6jh1yknf64" path="res://Image/Plot/G2.png" id="3_268j6"]
+[ext_resource type="Texture2D" uid="uid://cnuds6ybr77w6" path="res://Image/Plot/G3.png" id="4_ulhoq"]
+[ext_resource type="Texture2D" uid="uid://clusk53bm56qo" path="res://Image/Plot/G4.png" id="5_vok2u"]
+
+[node name="Plot1" type="Control" unique_id=339899890]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_hfrk3")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1453088991]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05342087, 0.053420886, 0.05342088, 1)
+
+[node name="G1" type="TextureRect" parent="." unique_id=470601229]
+layout_mode = 1
+anchors_preset = -1
+offset_right = 960.0
+offset_bottom = 540.0
+texture = ExtResource("2_nwe3t")
+expand_mode = 1
+
+[node name="G2" type="TextureRect" parent="." unique_id=1871398987]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -960.0
+offset_bottom = 540.0
+grow_horizontal = 0
+texture = ExtResource("3_268j6")
+expand_mode = 1
+
+[node name="G3" type="TextureRect" parent="." unique_id=1496096551]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -540.0
+offset_right = 960.0
+grow_vertical = 0
+texture = ExtResource("4_ulhoq")
+expand_mode = 1
+
+[node name="G4" type="TextureRect" parent="." unique_id=185071193]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -960.0
+offset_top = -540.0
+grow_horizontal = 0
+grow_vertical = 0
+texture = ExtResource("5_vok2u")
+expand_mode = 1
+
+[node name="Timer" type="Timer" parent="." unique_id=97129036]
+wait_time = 2.0
+autostart = true
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
