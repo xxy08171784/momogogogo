@@ -4,9 +4,12 @@
 [ext_resource type="Script" uid="uid://tq85ggicxdtl" path="res://Scripts/PauseMenu.cs" id="1_iukft"]
 [ext_resource type="StyleBox" uid="uid://b0hsbiqif3hyt" path="res://Style/VolumeSlider.tres" id="3_kldst"]
 [ext_resource type="StyleBox" uid="uid://bsye721jo6b5a" path="res://Style/Grabber.tres" id="4_b2bpf"]
+[ext_resource type="PackedScene" uid="uid://cpp8oxgsxh7n7" path="res://Scenes/Map/map.tscn" id="5_map"]
 
 [node name="Game" type="Node2D" unique_id=1626613144]
 script = ExtResource("1_gl6un")
+
+[node name="Map" parent="." instance=ExtResource("5_map")]
 
 [node name="PauseMenu" type="Control" parent="." unique_id=1735288786]
 process_mode = 2

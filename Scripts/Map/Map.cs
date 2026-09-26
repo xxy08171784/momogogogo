@@ -35,6 +35,8 @@ public partial class Map : Node2D
 		rollButton = GetNode<Button>("UI/RollButton");
 
 		rollButton.Pressed += OnRollButtonPressed;
+		redDice.Selected += OnDiceSelected;
+		blueDice.Selected += OnDiceSelected;
 
 		CreateMap();
 		GameState.Instance.PlayerPosition = 0;
@@ -164,6 +166,11 @@ public partial class Map : Node2D
 	{
 		GameState.Instance.CurrentTurnState = newState;
 		rollButton.Disabled = newState != GameState.TurnState.ReadyToRoll;
+	}
+
+	private async void OnDiceSelected(string color)
+	{
+		await HandleDiceSelected(color);
 	}
 
 	private async void OnRollButtonPressed()
