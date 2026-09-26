@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://b308c57tq87xo"]
+
+[ext_resource type="Script" uid="uid://vek2y4owhisn" path="res://Scenes/PlayerView.cs" id="1_4ujg7"]
+[ext_resource type="Script" uid="uid://c164eo31kcecd" path="res://Scenes/PlayerModel.cs" id="2_4q0oa"]
+[ext_resource type="Script" uid="uid://cghthen3f2qvb" path="res://Scenes/PlayerController.cs" id="3_8bcjg"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_7vt1v"]
+animations = [{
+"frames": [],
+"loop": 1,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [],
+"loop": 1,
+"name": &"idle_left",
+"speed": 5.0
+}, {
+"frames": [],
+"loop": 1,
+"name": &"idle_right",
+"speed": 5.0
+}, {
+"frames": [],
+"loop": 1,
+"name": &"idle_up",
+"speed": 5.0
+}, {
+"frames": [],
+"loop": 1,
+"name": &"walk_down",
+"speed": 5.0
+}, {
+"frames": [],
+"loop": 1,
+"name": &"walk_left",
+"speed": 5.0
+}, {
+"frames": [],
+"loop": 1,
+"name": &"walk_right",
+"speed": 5.0
+}, {
+"frames": [],
+"loop": 1,
+"name": &"walk_up",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_usysg"]
+
+[node name="Player" type="CharacterBody2D" unique_id=1346460838]
+
+[node name="PlayerView" type="Node2D" parent="." unique_id=1849575757]
+script = ExtResource("1_4ujg7")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="PlayerView" unique_id=1146752885]
+sprite_frames = SubResource("SpriteFrames_7vt1v")
+animation = &"walk_right"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1197440909]
+shape = SubResource("RectangleShape2D_usysg")
+
+[node name="PlayerModel" type="Node" parent="." unique_id=1310288161]
+script = ExtResource("2_4q0oa")
+
+[node name="PlayerController" type="Node" parent="." unique_id=518919545]
+script = ExtResource("3_8bcjg")

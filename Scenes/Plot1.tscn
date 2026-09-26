@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://ry6jh1yknf64" path="res://Image/Plot/G2.png" id="3_268j6"]
 [ext_resource type="Texture2D" uid="uid://cnuds6ybr77w6" path="res://Image/Plot/G3.png" id="4_ulhoq"]
 [ext_resource type="Texture2D" uid="uid://clusk53bm56qo" path="res://Image/Plot/G4.png" id="5_vok2u"]
+[ext_resource type="AudioStream" uid="uid://bqnknd0hacwd5" path="res://SFX/Opening.mp3" id="6_nwe3t"]
 
 [node name="Plot1" type="Control" unique_id=339899890]
 layout_mode = 3
@@ -71,5 +72,8 @@ expand_mode = 1
 [node name="Timer" type="Timer" parent="." unique_id=97129036]
 wait_time = 2.0
 autostart = true
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1405083684]
+stream = ExtResource("6_nwe3t")
 
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

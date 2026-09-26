@@ -8,6 +8,7 @@ public partial class Plot1 : Control
 	private TextureRect g4;
 
 	private Timer timer;
+	private AudioStreamPlayer audioPlayer;
 
 	private int current = 1;
 
@@ -20,11 +21,16 @@ public partial class Plot1 : Control
 
 		timer = GetNode<Timer>("Timer");
 
+		audioPlayer = GetNode<AudioStreamPlayer>("AudioStreamPlayer");
+
 		// 开始时只显示第一格
 		g1.Visible = true;
 		g2.Visible = false;
 		g3.Visible = false;
 		g4.Visible = false;
+
+		// 播放剧情音频
+		audioPlayer.Play();
 
 		// 2秒自动显示下一格
 		timer.WaitTime = 2.0f;
@@ -90,6 +96,9 @@ public partial class Plot1 : Control
 	private void StartGame()
 	{
 		timer.Stop();
+
+		// 停止剧情音频
+		audioPlayer.Stop();
 
 		GetTree().ChangeSceneToFile(
             "res://Scenes/Game.tscn"
