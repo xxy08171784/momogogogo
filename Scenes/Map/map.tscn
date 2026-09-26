@@ -1,0 +1,79 @@
+[gd_scene format=3 uid="uid://cpp8oxgsxh7n7"]
+
+[ext_resource type="Script" uid="uid://1xndbu6m85h6" path="res://Scripts/Map/map.gd" id="1_xtf6f"]
+[ext_resource type="PackedScene" uid="uid://0k1w22e7b3os" path="res://Scenes/Entities/Dice.tscn" id="2_jolfa"]
+[ext_resource type="Texture2D" uid="uid://bakky85llt60f" path="res://Resources/map.png" id="2_pvgv4"]
+[ext_resource type="PackedScene" uid="uid://djccmeu3jff7w" path="res://Scenes/Entities/Player.tscn" id="4_anho1"]
+
+[node name="Map" type="Node2D" unique_id=856293437]
+script = ExtResource("1_xtf6f")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=98991414]
+position = Vector2(596, 519)
+scale = Vector2(0.93301433, 0.8979266)
+texture = ExtResource("2_pvgv4")
+
+[node name="Entities" type="Node2D" parent="." unique_id=1916904724]
+
+[node name="RedDice" parent="Entities" unique_id=1011671926 instance=ExtResource("2_jolfa")]
+position = Vector2(1720, 970)
+metadata/_edit_group_ = true
+
+[node name="BlueDice" parent="Entities" unique_id=1576549963 instance=ExtResource("2_jolfa")]
+position = Vector2(1505, 970)
+dice_color = "blue"
+metadata/_edit_group_ = true
+
+[node name="Player" parent="Entities" unique_id=722436799 instance=ExtResource("4_anho1")]
+position = Vector2(584, 120)
+
+[node name="UI" type="Node2D" parent="." unique_id=899209929]
+
+[node name="RollButton" type="Button" parent="UI" unique_id=793649205]
+offset_left = 1195.0
+offset_top = 975.0
+offset_right = 1399.0
+offset_bottom = 1068.0
+theme_override_font_sizes/font_size = 45
+text = "Button"
+
+[node name="TilePoints" type="Node2D" parent="." unique_id=383867725]
+metadata/_edit_lock_ = true
+
+[node name="Marker2D0" type="Marker2D" parent="TilePoints" unique_id=567207156]
+position = Vector2(598, 125)
+
+[node name="Marker2D1" type="Marker2D" parent="TilePoints" unique_id=909824852]
+position = Vector2(795, 163)
+
+[node name="Marker2D2" type="Marker2D" parent="TilePoints" unique_id=618543967]
+position = Vector2(942, 291)
+
+[node name="Marker2D3" type="Marker2D" parent="TilePoints" unique_id=395575234]
+position = Vector2(1011, 496)
+
+[node name="Marker2D4" type="Marker2D" parent="TilePoints" unique_id=1717800396]
+position = Vector2(966, 679)
+
+[node name="Marker2D5" type="Marker2D" parent="TilePoints" unique_id=2115248652]
+position = Vector2(813, 826)
+
+[node name="Marker2D6" type="Marker2D" parent="TilePoints" unique_id=2077580764]
+position = Vector2(592, 864)
+
+[node name="Marker2D7" type="Marker2D" parent="TilePoints" unique_id=209660714]
+position = Vector2(378, 818)
+
+[node name="Marker2D8" type="Marker2D" parent="TilePoints" unique_id=1909935347]
+position = Vector2(234, 668)
+
+[node name="Marker2D9" type="Marker2D" parent="TilePoints" unique_id=329723363]
+position = Vector2(188, 475)
+
+[node name="Marker2D10" type="Marker2D" parent="TilePoints" unique_id=1849388237]
+position = Vector2(250, 296)
+
+[node name="Marker2D11" type="Marker2D" parent="TilePoints" unique_id=258083105]
+position = Vector2(396, 157)
+
+[connection signal="pressed" from="UI/RollButton" to="." method="_on_roll_button_pressed"]
