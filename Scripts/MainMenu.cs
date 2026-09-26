@@ -43,16 +43,16 @@ public partial class MainMenu : Control
 		);
 	}
 
-	private void OnNewGamePressed()
-	{
-		GD.Print("开始新游戏");
+private void OnNewGamePressed()
+{
+	GD.Print("开始新游戏");
 
-		SaveManager.Instance.DeleteSave();
+	SaveManager.Instance.DeleteSave();
 
-		GetTree().ChangeSceneToFile(
-            "res://Scenes/Game.tscn"
-		);
-	}
+	GetTree().ChangeSceneToFile(
+        "res://Scenes/Plot1.tscn"
+	);
+}
 
 	private void OnSettingsPressed()
 	{
