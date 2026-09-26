@@ -23,3 +23,7 @@ bulid/logs/
 *.save.backup
 *.run
 *.run.backup
+
+# Local development backups / editor settings
+/Backup/
+/.vscode/

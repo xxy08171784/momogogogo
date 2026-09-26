@@ -2,34 +2,35 @@
 
 > 更新时间：2026-09-26  
 > 当前阶段：赛前练习 Demo / 核心玩法原型  
-> 当前主要开发语言：GDScript  
+> 当前主要开发语言：C#
 > 架构方向：MVC 思路拆分，玩法逻辑与 UI 表现尽量解耦
+> 2026-09-26：核心玩法脚本已从 GDScript 转换为 C#。原 GDScript 已本地备份到 `Backup/GDScript/`，该目录已加入 `.gitignore`，不会上传 GitHub。
 
 ## 1. 当前整体框架
 
 目前已经搭建出的核心流程是：
 
 ```text
-READY_TO_ROLL
+ReadyToRoll
     ↓ 玩家点击“掷骰子”
-ROLLING
+Rolling
     ↓ 红蓝骰同时生成结果并播放动画
-WAITING_FOR_DICE_SELECTION
+WaitingForDiceSelection
     ↓ UI / Controller 把玩家选择的 red / blue 传给玩法层
-MOVING
+Moving
     ↓ Player 根据骰子点数计算目标格，并逐格 Tween 移动
-RESOLVING
+Resolving
     ↓ Map 根据落脚格执行地块结算
-READY_TO_ROLL
+ReadyToRoll
 ```
 
 当前职责大致如下：
 
-- `GameState.gd`：全局运行时数据、角色基础属性、临时属性、回合状态、骰子结果。
-- `MapTileData.gd`：单个地图格的数据结构。
-- `map.gd`：地图生成、骰子规则、回合流程、地块结算、对 UI / Controller 提供玩法接口。
-- `Player.gd`：目标格计算、逐格移动动画、角色升级接口。
-- `dice.gd`：骰子的视觉动画。
+- `GameState.cs`：全局运行时数据、角色基础属性、临时属性、回合状态、骰子结果。
+- `MapTileData.cs`：单个地图格的数据结构。
+- `Map.cs`：地图生成、骰子规则、回合流程、地块结算、对 UI / Controller 提供玩法接口。
+- `Player.cs`：目标格计算、逐格移动动画、角色升级接口。
+- `Dice.cs`：骰子的视觉动画。
 - `map.tscn`：地图、Player、红蓝骰、RollButton、12 个格子 Marker2D 的场景组合。
 - `Player.tscn`：角色场景。
 - `Dice.tscn`：可复用骰子场景。
@@ -38,44 +39,44 @@ READY_TO_ROLL
 
 ## 2. 主要文件与职责
 
-### Scripts/Data/GameState.gd
+### Scripts/Data/GameState.cs
 
 作为全局状态数据源，目前保存：
 
 ```text
-TILE_COUNT = 12
+TileCount = 12
 
-player_level
-player_hp
-player_atk
-player_def
+PlayerLevel
+PlayerHp
+PlayerAtk
+PlayerDef
 
-temp_atk
-temp_def
+TempAtk
+TempDef
 
-player_position
-dice_color
+PlayerPosition
+DiceColor
 dice["red"]
 dice["blue"]
-turn_state
+CurrentTurnState
 ```
 
 当前回合状态：
 
-```gdscript
+```csharp
 enum TurnState {
-    READY_TO_ROLL,
-    ROLLING,
-    WAITING_FOR_DICE_SELECTION,
-    MOVING,
-    RESOLVING
+    ReadyToRoll,
+    Rolling,
+    WaitingForDiceSelection,
+    Moving,
+    Resolving
 }
 ```
 
 临时属性清空接口：
 
-```gdscript
-GameState.reset_temp_stats()
+```csharp
+GameState.Instance.ResetTempStats()
 ```
 
 当前初始化角色属性：
@@ -89,7 +90,7 @@ DEF = 1
 
 ---
 
-### Scripts/Data/MapTileData.gd
+### Scripts/Data/MapTileData.cs
 
 每个地图格是一个 `MapTileData` Resource。
 
@@ -113,12 +114,12 @@ BLUE
 当前最大等级：
 
 ```text
-MAX_UPGRADE = 2
+MaxUpgrade = 2
 ```
 
 ---
 
-### Scripts/Map/map.gd
+### Scripts/Map/Map.cs
 
 当前负责：
 
@@ -150,7 +151,7 @@ MAX_UPGRADE = 2
 
 ---
 
-### Scripts/Entities/Player.gd
+### Scripts/Entities/Player.cs
 
 当前负责：
 
@@ -168,12 +169,12 @@ MAX_UPGRADE = 2
 
 4. 根据 `Marker2D0 ~ Marker2D11` 逐格移动。
 5. 每格使用 Tween 移动约 0.2 秒。
-6. 移动完成后更新 `GameState.player_position`。
+6. 移动完成后更新 `GameState.Instance.PlayerPosition`。
 7. 提供角色升级接口。
 
 ---
 
-### Scenes/Entities/dice.gd
+### Scenes/Entities/Dice.cs
 
 当前只负责骰子视觉动画。
 
@@ -211,8 +212,8 @@ Map
 
 其中：
 
-- `RedDice.dice_color = "red"`
-- `BlueDice.dice_color = "blue"`
+- `RedDice.DiceColor = "red"`
+- `BlueDice.DiceColor = "blue"`
 - 12 个 Marker2D 对应 12 个地图格的实际画面位置。
 
 ---
@@ -249,24 +250,24 @@ Map
 - 等待玩家选择骰子。
 - 正在移动。
 - 正在结算。
-- 非 `READY_TO_ROLL` 状态下 RollButton 会被禁用。
+- 非 `ReadyToRoll` 状态下 RollButton 会被禁用。
 - 移动期间重复选择骰子会被玩法接口拒绝。
 
 ### 临时属性
 
 - 已增加：
 
-```gdscript
-GameState.temp_atk
-GameState.temp_def
+```csharp
+GameState.Instance.TempAtk
+GameState.Instance.TempDef
 ```
 
 - 当前红格提供临时攻击。
 - 当前蓝格提供临时防御。
 - 可通过：
 
-```gdscript
-GameState.reset_temp_stats()
+```csharp
+GameState.Instance.ResetTempStats()
 ```
 
 统一清空。
@@ -277,7 +278,7 @@ GameState.reset_temp_stats()
 
 - RED / BLUE / WHITE 会增加 `value`。
 - BLACK 会减少 `value`。
-- 地块达到 `MAX_UPGRADE` 后不再继续升级。
+- 地块达到 `MaxUpgrade` 后不再继续升级。
 - 当前结算顺序是：
 
 ```text
@@ -290,22 +291,22 @@ GameState.reset_temp_stats()
 
 当前提供：
 
-```gdscript
-player.upgrade("hp")
-player.upgrade("atk")
-player.upgrade("def")
+```csharp
+player.Upgrade("hp")
+player.Upgrade("atk")
+player.Upgrade("def")
 ```
 
 也可以指定数值：
 
-```gdscript
-player.upgrade("atk", 2)
+```csharp
+player.Upgrade("atk", 2)
 ```
 
 成功升级会同时使：
 
 ```text
-player_level + 1
+PlayerLevel + 1
 ```
 
 具体升级数值目前仍属于临时规则，后续按策划方案调整。
@@ -318,14 +319,14 @@ player_level + 1
 
 玩家点击红骰时：
 
-```gdscript
-map.handle_dice_selected("red")
+```csharp
+map.HandleDiceSelected("red")
 ```
 
 玩家点击蓝骰时：
 
-```gdscript
-map.handle_dice_selected("blue")
+```csharp
+map.HandleDiceSelected("blue")
 ```
 
 该接口内部会自动执行：
@@ -337,17 +338,17 @@ map.handle_dice_selected("blue")
 ↓
 读取对应骰子点数
 ↓
-切换为 MOVING
+切换为 Moving
 ↓
 Player 计算目标格
 ↓
 Player 逐格移动
 ↓
-切换为 RESOLVING
+切换为 Resolving
 ↓
 地块结算
 ↓
-恢复 READY_TO_ROLL
+恢复 ReadyToRoll
 ```
 
 调用者不需要自己处理移动和结算。
@@ -356,8 +357,8 @@ Player 逐格移动
 
 ### 骰子选择底层接口
 
-```gdscript
-map.select_dice_color(color: String) -> bool
+```csharp
+map.SelectDiceColor(string color) -> bool
 ```
 
 合法值：
@@ -369,21 +370,21 @@ map.select_dice_color(color: String) -> bool
 
 非法字符串返回 `false`。
 
-通常 UI 层应该优先调用 `handle_dice_selected()`，而不是直接调用这个底层接口。
+通常 UI 层应该优先调用 `HandleDiceSelected()`，而不是直接调用这个底层接口。
 
 ---
 
 ### 投骰接口
 
-```gdscript
-map.roll_dice()
+```csharp
+map.RollDice()
 ```
 
 执行后结果保存在：
 
-```gdscript
-GameState.dice["red"]
-GameState.dice["blue"]
+```csharp
+GameState.Instance.Dice["red"]
+GameState.Instance.Dice["blue"]
 ```
 
 正常游戏流程中由 `RollButton` 自动调用。
@@ -392,8 +393,8 @@ GameState.dice["blue"]
 
 ### Player 移动接口
 
-```gdscript
-await player.move_by_steps(steps)
+```csharp
+await player.MoveBySteps(steps)
 ```
 
 输入前进格数，Player 自动：
@@ -401,59 +402,59 @@ await player.move_by_steps(steps)
 ```text
 计算目标格
 → 逐格移动
-→ 更新 GameState.player_position
+→ 更新 GameState.Instance.PlayerPosition
 ```
 
 更底层的移动接口：
 
-```gdscript
-await player.move_to_position(target_tile)
+```csharp
+await player.MoveToPosition(target_tile)
 ```
 
 ---
 
 ### 地块结算接口
 
-```gdscript
-map.resolve_tile_effect()
+```csharp
+map.ResolveTileEffect()
 ```
 
 根据：
 
-```gdscript
-GameState.player_position
+```csharp
+GameState.Instance.PlayerPosition
 ```
 
 找到当前落脚格并执行效果。
 
-正常流程中由 `handle_dice_selected()` 在人物移动结束后自动调用。
+正常流程中由 `HandleDiceSelected()` 在人物移动结束后自动调用。
 
 ---
 
 ### 回合状态接口
 
-```gdscript
-map.set_turn_state(new_state)
+```csharp
+map.SetTurnState(newState)
 ```
 
 状态定义位于：
 
-```gdscript
+```csharp
 GameState.TurnState
 ```
 
 UI 如果需要根据回合状态控制显示，也可以读取：
 
-```gdscript
-GameState.turn_state
+```csharp
+GameState.Instance.CurrentTurnState
 ```
 
 ---
 
 ### 角色升级接口
 
-```gdscript
-player.upgrade(choice, amount)
+```csharp
+player.Upgrade(choice, amount)
 ```
 
 `choice` 当前支持：
@@ -481,11 +482,11 @@ player.upgrade(choice, amount)
 - 玩家点击红骰 / 蓝骰的 UI 交互。
   - 建议由 UI / Controller 负责。
   - UI 最终只需要调用：
-    `handle_dice_selected("red")` 或 `handle_dice_selected("blue")`。
+    `HandleDiceSelected("red")` 或 `HandleDiceSelected("blue")`。
 
 - WHITE 地块对玩家的具体效果。
 - BLACK 地块对玩家的具体效果。
-- `temp_atk / temp_def` 的正式清空时机。
+- `TempAtk / TempDef` 的正式清空时机。
 - 角色升级的正式策划数值。
 - 升级选择 UI。
 - 地块结算反馈 UI / 动画。
@@ -519,13 +520,13 @@ player.upgrade(choice, amount)
 - 骰子结果显示。
 - 面板、按钮、文字。
 - 升级选项界面。
-- 根据 `GameState.turn_state` 调整 UI 状态。
+- 根据 `GameState.Instance.CurrentTurnState` 调整 UI 状态。
 
 双方当前最核心的对接点：
 
-```gdscript
-map.handle_dice_selected("red")
-map.handle_dice_selected("blue")
+```csharp
+map.HandleDiceSelected("red")
+map.HandleDiceSelected("blue")
 ```
 
 ---
@@ -537,9 +538,9 @@ map.handle_dice_selected("blue")
 1. WHITE 地块的实际效果。
 2. BLACK 地块的实际效果。
 3. 红蓝地块临时属性持续多久。
-4. `temp_atk / temp_def` 在什么时候清空。
+4. `TempAtk / TempDef` 在什么时候清空。
 5. HP / ATK / DEF 每次升级分别增加多少。
 6. 地块满级后是否仍然触发玩家属性效果。
 7. 地块成长与玩家获得效果的最终先后顺序。
 
-这些规则确认后，可以继续补全 `resolve_tile_effect()` 和角色成长部分。
+这些规则确认后，可以继续补全 `ResolveTileEffect()` 和角色成长部分。

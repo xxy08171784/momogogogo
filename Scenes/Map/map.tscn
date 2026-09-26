@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cpp8oxgsxh7n7"]
 
-[ext_resource type="Script" uid="uid://1xndbu6m85h6" path="res://Scripts/Map/map.gd" id="1_xtf6f"]
+[ext_resource type="Script" path="res://Scripts/Map/Map.cs" id="1_xtf6f"]
 [ext_resource type="PackedScene" uid="uid://0k1w22e7b3os" path="res://Scenes/Entities/Dice.tscn" id="2_jolfa"]
 [ext_resource type="Texture2D" uid="uid://bakky85llt60f" path="res://Resources/map.png" id="2_pvgv4"]
 [ext_resource type="PackedScene" uid="uid://djccmeu3jff7w" path="res://Scenes/Entities/Player.tscn" id="4_anho1"]
@@ -21,7 +21,7 @@ metadata/_edit_group_ = true
 
 [node name="BlueDice" parent="Entities" unique_id=1576549963 instance=ExtResource("2_jolfa")]
 position = Vector2(1505, 970)
-dice_color = "blue"
+DiceColor = "blue"
 metadata/_edit_group_ = true
 
 [node name="Player" parent="Entities" unique_id=722436799 instance=ExtResource("4_anho1")]
@@ -75,5 +75,3 @@ position = Vector2(250, 296)
 
 [node name="Marker2D11" type="Marker2D" parent="TilePoints" unique_id=258083105]
 position = Vector2(396, 157)
-
-[connection signal="pressed" from="UI/RollButton" to="." method="_on_roll_button_pressed"]

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://0k1w22e7b3os"]
 
-[ext_resource type="Script" uid="uid://bx6oujs8ygg8b" path="res://Scenes/Entities/dice.gd" id="1_sq6wd"]
+[ext_resource type="Script" path="res://Scenes/Entities/Dice.cs" id="1_sq6wd"]
 [ext_resource type="Texture2D" uid="uid://c0eyuvckw5o13" path="res://Resources/dice.png" id="2_uhvkc"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_gqjev"]
