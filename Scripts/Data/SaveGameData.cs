@@ -1,0 +1,45 @@
+using System.Collections.Generic;
+
+// 纯存档数据，不保存任何 Godot Node 引用。
+public sealed class SaveGameData
+{
+	public int Version { get; set; } = 1;
+	public long SavedAtUnixTime { get; set; }
+	public PlayerSaveData Player { get; set; } = new();
+	public DiceSaveData Dice { get; set; } = new();
+	public BossSaveData Boss { get; set; } = new();
+	public List<TileSaveData> Tiles { get; set; } = new();
+}
+
+public sealed class PlayerSaveData
+{
+	public int Level { get; set; }
+	public int MaxHp { get; set; }
+	public int Hp { get; set; }
+	public int Atk { get; set; }
+	public int Def { get; set; }
+	public int Shield { get; set; }
+	public int TempAtk { get; set; }
+	public int TempDef { get; set; }
+	public int Position { get; set; }
+}
+
+public sealed class DiceSaveData
+{
+	public string SelectedColor { get; set; } = "red";
+	public int RedValue { get; set; }
+	public int BlueValue { get; set; }
+}
+
+public sealed class BossSaveData
+{
+	public int Index { get; set; }
+	public int CurrentHp { get; set; }
+}
+
+public sealed class TileSaveData
+{
+	public int Color { get; set; }
+	public int Level { get; set; }
+	public int Value { get; set; }
+}

@@ -5,11 +5,12 @@
 [ext_resource type="StyleBox" uid="uid://b0hsbiqif3hyt" path="res://Style/VolumeSlider.tres" id="3_kldst"]
 [ext_resource type="StyleBox" uid="uid://bsye721jo6b5a" path="res://Style/Grabber.tres" id="4_b2bpf"]
 [ext_resource type="PackedScene" uid="uid://cpp8oxgsxh7n7" path="res://Scenes/Map/map.tscn" id="5_map"]
+[ext_resource type="SystemFont" path="res://Style/ChineseUIFont.tres" id="6_cnfont"]
 
 [node name="Game" type="Node2D" unique_id=1626613144]
 script = ExtResource("1_gl6un")
 
-[node name="Map" parent="." instance=ExtResource("5_map")]
+[node name="Map" parent="." unique_id=1675432071 instance=ExtResource("5_map")]
 
 [node name="PauseMenu" type="Control" parent="." unique_id=1735288786]
 process_mode = 2
@@ -60,6 +61,9 @@ offset_right = 150.0
 offset_bottom = 30.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_fonts/font = ExtResource("6_cnfont")
+theme_override_font_sizes/font_size = 28
+text = "继续游戏"
 
 [node name="SettingsButton" type="Button" parent="PauseMenu/PausePanel" unique_id=2013014298]
 layout_mode = 1
@@ -74,6 +78,9 @@ offset_right = 153.0
 offset_bottom = 142.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_fonts/font = ExtResource("6_cnfont")
+theme_override_font_sizes/font_size = 28
+text = "设置"
 
 [node name="MainMenuButton" type="Button" parent="PauseMenu/PausePanel" unique_id=764261989]
 layout_mode = 1
@@ -88,6 +95,9 @@ offset_right = 153.0
 offset_bottom = 252.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_fonts/font = ExtResource("6_cnfont")
+theme_override_font_sizes/font_size = 28
+text = "返回主菜单"
 
 [node name="SettingsPanel" type="Panel" parent="PauseMenu" unique_id=1238347348]
 visible = false
@@ -111,6 +121,12 @@ theme_override_styles/grabber_area_highlight = ExtResource("4_b2bpf")
 value = 50.0
 
 [node name="BackButton" type="Button" parent="PauseMenu/SettingsPanel" unique_id=1157779235]
+custom_minimum_size = Vector2(300, 60)
 layout_mode = 0
-offset_right = 8.0
-offset_bottom = 8.0
+offset_left = 176.0
+offset_top = 300.0
+offset_right = 476.0
+offset_bottom = 360.0
+theme_override_fonts/font = ExtResource("6_cnfont")
+theme_override_font_sizes/font_size = 28
+text = "返回"

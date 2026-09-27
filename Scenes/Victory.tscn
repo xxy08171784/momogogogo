@@ -1,0 +1,57 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scripts/EndScreen.cs" id="1_end"]
+[ext_resource type="SystemFont" path="res://Style/ChineseUIFont.tres" id="2_font"]
+
+[node name="Victory" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_end")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.035, 0.09, 0.065, 1)
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 0
+offset_left = 560.0
+offset_top = 300.0
+offset_right = 1360.0
+offset_bottom = 390.0
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 56
+text = "通关成功"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Description" type="Label" parent="."]
+layout_mode = 0
+offset_left = 510.0
+offset_top = 420.0
+offset_right = 1410.0
+offset_bottom = 490.0
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 30
+text = "所有 Boss 已全部击败！"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ReturnButton" type="Button" parent="."]
+custom_minimum_size = Vector2(360, 72)
+layout_mode = 0
+offset_left = 780.0
+offset_top = 610.0
+offset_right = 1140.0
+offset_bottom = 682.0
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 30
+text = "返回主菜单"

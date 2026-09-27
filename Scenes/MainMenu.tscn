@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cfcxwbhscjwag"]
 
 [ext_resource type="Script" uid="uid://c70fky7v18s8m" path="res://Scripts/MainMenu.cs" id="1_tt5f1"]
+[ext_resource type="SystemFont" path="res://Style/ChineseUIFont.tres" id="2_cnfont"]
 
 [node name="MainMenu" type="Control" unique_id=1501592089]
 layout_mode = 3
@@ -31,15 +32,27 @@ theme_override_constants/separation = 45
 [node name="ContinueButton" type="Button" parent="VBoxContainer" unique_id=401913515]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
+theme_override_fonts/font = ExtResource("2_cnfont")
+theme_override_font_sizes/font_size = 28
+text = "继续游戏"
 
 [node name="NewGameButton" type="Button" parent="VBoxContainer" unique_id=261687218]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
+theme_override_fonts/font = ExtResource("2_cnfont")
+theme_override_font_sizes/font_size = 28
+text = "新游戏"
 
 [node name="SettingsButton" type="Button" parent="VBoxContainer" unique_id=132260214]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
+theme_override_fonts/font = ExtResource("2_cnfont")
+theme_override_font_sizes/font_size = 28
+text = "设置"
 
 [node name="QuitButton" type="Button" parent="VBoxContainer" unique_id=1761088102]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
+theme_override_fonts/font = ExtResource("2_cnfont")
+theme_override_font_sizes/font_size = 28
+text = "退出游戏"

@@ -37,6 +37,7 @@ public partial class MainMenu : Control
 	private void OnContinuePressed()
 	{
 		GD.Print("继续游戏");
+		SaveManager.Instance.RequestContinue();
 
 		GetTree().ChangeSceneToFile(
             "res://Scenes/Game.tscn"
@@ -47,7 +48,7 @@ private void OnNewGamePressed()
 {
 	GD.Print("开始新游戏");
 
-	SaveManager.Instance.DeleteSave();
+	SaveManager.Instance.StartNewGame();
 
 	GetTree().ChangeSceneToFile(
         "res://Scenes/Plot1.tscn"

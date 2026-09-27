@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://0k1w22e7b3os"]
 
-[ext_resource type="Script" path="res://Scenes/Entities/Dice.cs" id="1_sq6wd"]
-[ext_resource type="Texture2D" uid="uid://c0eyuvckw5o13" path="res://Resources/dice.png" id="2_uhvkc"]
+[ext_resource type="Script" uid="uid://c4bs0sa2uxsc8" path="res://Scenes/Entities/Dice.cs" id="1_sq6wd"]
+[ext_resource type="Texture2D" uid="uid://cygkw6wryor4e" path="res://Resources/dice1.png" id="2_sq6wd"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_gqjev"]
 radius = 79.755875
@@ -11,7 +11,7 @@ script = ExtResource("1_sq6wd")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1576322906]
 scale = Vector2(0.2796875, 0.2796875)
-texture = ExtResource("2_uhvkc")
+texture = ExtResource("2_sq6wd")
 hframes = 6
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=368807774]

@@ -1,77 +1,213 @@
 [gd_scene format=3 uid="uid://cpp8oxgsxh7n7"]
 
-[ext_resource type="Script" path="res://Scripts/Map/Map.cs" id="1_xtf6f"]
+[ext_resource type="Script" uid="uid://ojj00grtayun" path="res://Scripts/Map/Map.cs" id="1_xtf6f"]
 [ext_resource type="PackedScene" uid="uid://0k1w22e7b3os" path="res://Scenes/Entities/Dice.tscn" id="2_jolfa"]
-[ext_resource type="Texture2D" uid="uid://bakky85llt60f" path="res://Resources/map.png" id="2_pvgv4"]
+[ext_resource type="Texture2D" uid="uid://lw2vetc2fdyp" path="res://Resources/map.png" id="2_pvgv4"]
 [ext_resource type="PackedScene" uid="uid://djccmeu3jff7w" path="res://Scenes/Entities/Player.tscn" id="4_anho1"]
+[ext_resource type="Script" uid="uid://bgefu2vb0fov" path="res://Scripts/Battle/BattleSystem.cs" id="6_battle"]
+[ext_resource type="Script" uid="uid://dm6nuwuex1pep" path="res://Scripts/Battle/BossRushSystem.cs" id="7_bossrush"]
 
 [node name="Map" type="Node2D" unique_id=856293437]
 script = ExtResource("1_xtf6f")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=98991414]
-position = Vector2(596, 519)
-scale = Vector2(0.93301433, 0.8979266)
+position = Vector2(960.4678, 539.06506)
+scale = Vector2(1.1301911, 1.1640066)
 texture = ExtResource("2_pvgv4")
 
 [node name="Entities" type="Node2D" parent="." unique_id=1916904724]
 
 [node name="RedDice" parent="Entities" unique_id=1011671926 instance=ExtResource("2_jolfa")]
-position = Vector2(1720, 970)
+position = Vector2(1580, 650)
 metadata/_edit_group_ = true
 
 [node name="BlueDice" parent="Entities" unique_id=1576549963 instance=ExtResource("2_jolfa")]
-position = Vector2(1505, 970)
+position = Vector2(1778, 653)
 DiceColor = "blue"
 metadata/_edit_group_ = true
 
 [node name="Player" parent="Entities" unique_id=722436799 instance=ExtResource("4_anho1")]
-position = Vector2(584, 120)
+position = Vector2(589, 465)
+
+[node name="BossSpawnPoint" type="Marker2D" parent="Entities" unique_id=217822298]
+position = Vector2(955, 570)
+
+[node name="BattleSystem" type="Node" parent="." unique_id=909349089]
+script = ExtResource("6_battle")
+
+[node name="BossRushSystem" type="Node" parent="." unique_id=885884067]
+script = ExtResource("7_bossrush")
 
 [node name="UI" type="Node2D" parent="." unique_id=899209929]
 
 [node name="RollButton" type="Button" parent="UI" unique_id=793649205]
-offset_left = 1195.0
-offset_top = 975.0
-offset_right = 1399.0
-offset_bottom = 1068.0
+offset_left = 1581.0
+offset_top = 827.0
+offset_right = 1785.0
+offset_bottom = 920.0
 theme_override_font_sizes/font_size = 45
 text = "Button"
+
+[node name="PlayerHealthBar" type="ProgressBar" parent="UI" unique_id=1376864009]
+offset_left = 660.0
+offset_top = 30.0
+offset_right = 1260.0
+offset_bottom = 72.0
+mouse_filter = 2
+max_value = 30.0
+value = 30.0
+show_percentage = false
+
+[node name="HpLabel" type="Label" parent="UI/PlayerHealthBar" unique_id=690292921]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "玩家 HP  30 / 30"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayerStatsPanel" type="ColorRect" parent="UI" unique_id=276201252]
+offset_left = 1285.0
+offset_top = 24.0
+offset_right = 1585.0
+offset_bottom = 154.0
+mouse_filter = 2
+color = Color(0.035, 0.045, 0.06, 0.82)
+
+[node name="StatsLabel" type="Label" parent="UI/PlayerStatsPanel" unique_id=1285568863]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 7.0
+offset_right = 286.0
+offset_bottom = 108.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "玩家属性
+攻击 = 3
+防御 = 1
+护盾 = 0 / 3"
+
+[node name="GoblinStatsPanel" type="ColorRect" parent="UI" unique_id=747507262]
+offset_left = 1080.0
+offset_top = 571.0
+offset_right = 1199.0
+offset_bottom = 730.0
+mouse_filter = 2
+color = Color(0.09, 0.035, 0.035, 0.84)
+
+[node name="StatsLabel" type="Label" parent="UI/GoblinStatsPanel" unique_id=1647328092]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 127.0
+offset_bottom = 153.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "第 1 / 5 只
+史莱姆
+HP = 15 / 15
+攻击 = 2
+防御 = 0"
+
+[node name="UpgradePanel" type="ColorRect" parent="UI" unique_id=2060356094]
+visible = false
+offset_left = 610.0
+offset_top = 300.0
+offset_right = 1310.0
+offset_bottom = 655.0
+color = Color(0.025, 0.03, 0.045, 0.96)
+
+[node name="Title" type="Label" parent="UI/UpgradePanel" unique_id=736438458]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 25.0
+offset_right = 670.0
+offset_bottom = 78.0
+theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
+theme_override_font_sizes/font_size = 30
+text = "击败 Boss！选择一项升级"
+horizontal_alignment = 1
+
+[node name="CurrentStats" type="Label" parent="UI/UpgradePanel" unique_id=674910250]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 90.0
+offset_right = 670.0
+offset_bottom = 130.0
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 20
+text = "当前：HP 30/30    攻击 3    防御 1"
+horizontal_alignment = 1
+
+[node name="AttackButton" type="Button" parent="UI/UpgradePanel" unique_id=1172901166]
+layout_mode = 0
+offset_left = 55.0
+offset_top = 165.0
+offset_right = 245.0
+offset_bottom = 280.0
+theme_override_font_sizes/font_size = 24
+text = "攻击 +1"
+
+[node name="DefenseButton" type="Button" parent="UI/UpgradePanel" unique_id=1161606517]
+layout_mode = 0
+offset_left = 255.0
+offset_top = 165.0
+offset_right = 445.0
+offset_bottom = 280.0
+theme_override_font_sizes/font_size = 24
+text = "防御 +1"
+
+[node name="HpButton" type="Button" parent="UI/UpgradePanel" unique_id=196774528]
+layout_mode = 0
+offset_left = 455.0
+offset_top = 165.0
+offset_right = 645.0
+offset_bottom = 280.0
+theme_override_font_sizes/font_size = 22
+text = "最大生命 +5"
+
+[node name="TileLevelLabels" type="Node2D" parent="." unique_id=850215940]
 
 [node name="TilePoints" type="Node2D" parent="." unique_id=383867725]
 metadata/_edit_lock_ = true
 
 [node name="Marker2D0" type="Marker2D" parent="TilePoints" unique_id=567207156]
-position = Vector2(598, 125)
+position = Vector2(605, 261)
 
 [node name="Marker2D1" type="Marker2D" parent="TilePoints" unique_id=909824852]
-position = Vector2(795, 163)
+position = Vector2(825, 261)
 
 [node name="Marker2D2" type="Marker2D" parent="TilePoints" unique_id=618543967]
-position = Vector2(942, 291)
+position = Vector2(1053, 261)
 
 [node name="Marker2D3" type="Marker2D" parent="TilePoints" unique_id=395575234]
-position = Vector2(1011, 496)
+position = Vector2(1273, 261)
 
 [node name="Marker2D4" type="Marker2D" parent="TilePoints" unique_id=1717800396]
-position = Vector2(966, 679)
+position = Vector2(1304, 471)
 
 [node name="Marker2D5" type="Marker2D" parent="TilePoints" unique_id=2115248652]
-position = Vector2(813, 826)
+position = Vector2(1306, 677)
 
 [node name="Marker2D6" type="Marker2D" parent="TilePoints" unique_id=2077580764]
-position = Vector2(592, 864)
+position = Vector2(1304, 883)
 
 [node name="Marker2D7" type="Marker2D" parent="TilePoints" unique_id=209660714]
-position = Vector2(378, 818)
+position = Vector2(1053, 883)
 
 [node name="Marker2D8" type="Marker2D" parent="TilePoints" unique_id=1909935347]
-position = Vector2(234, 668)
+position = Vector2(830, 883)
 
 [node name="Marker2D9" type="Marker2D" parent="TilePoints" unique_id=329723363]
-position = Vector2(188, 475)
+position = Vector2(607, 883)
 
 [node name="Marker2D10" type="Marker2D" parent="TilePoints" unique_id=1849388237]
-position = Vector2(250, 296)
+position = Vector2(605, 680)
 
 [node name="Marker2D11" type="Marker2D" parent="TilePoints" unique_id=258083105]
-position = Vector2(396, 157)
+position = Vector2(605, 471)

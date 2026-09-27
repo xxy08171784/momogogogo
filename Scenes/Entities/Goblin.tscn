@@ -1,0 +1,156 @@
+[gd_scene format=3 uid="uid://c0mh4g7onfnxe"]
+
+[ext_resource type="Script" uid="uid://c1pidi85fn114" path="res://Scripts/Entities/Goblin.cs" id="1_goblin_script"]
+[ext_resource type="Texture2D" uid="uid://b0nltcmoapo6s" path="res://Resources/哥布林兄弟/goblin.png" id="2_goblin_texture"]
+
+[sub_resource type="Animation" id="Animation_goblin_reset"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Sprite2D:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_goblin_attack"]
+resource_name = "attack"
+length = 0.72
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.12, 0.24, 0.36, 0.48, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [6, 7, 8, 9, 10, 11]
+}
+
+[sub_resource type="Animation" id="Animation_goblin_death"]
+resource_name = "death"
+length = 0.72
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.12, 0.24, 0.36, 0.48, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [12, 13, 14, 15, 16, 17]
+}
+
+[sub_resource type="Animation" id="Animation_goblin_hit"]
+resource_name = "hit"
+length = 0.24
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.08, 0.2),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 0.25, 0.25, 1), Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_goblin_idle"]
+resource_name = "idle"
+length = 0.19999999999999998
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_goblin"]
+_data = {
+&"RESET": SubResource("Animation_goblin_reset"),
+&"attack": SubResource("Animation_goblin_attack"),
+&"death": SubResource("Animation_goblin_death"),
+&"hit": SubResource("Animation_goblin_hit"),
+&"idle": SubResource("Animation_goblin_idle")
+}
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
+bg_color = Color(0.12, 0.12, 0.12, 0.9)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.75, 0.12, 0.12, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="Goblin" type="Node2D" unique_id=1565443898]
+script = ExtResource("1_goblin_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1997611353]
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("2_goblin_texture")
+hframes = 6
+vframes = 3
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1083507091]
+libraries/ = SubResource("AnimationLibrary_goblin")
+
+[node name="HealthBar" type="ProgressBar" parent="." unique_id=1607175735]
+offset_left = -150.0
+offset_top = -150.0
+offset_right = 150.0
+offset_bottom = -118.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_hp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
+max_value = 70.0
+value = 70.0
+show_percentage = false
+
+[node name="HpLabel" type="Label" parent="HealthBar" unique_id=1097285362]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "70 / 70"
+horizontal_alignment = 1
+vertical_alignment = 1

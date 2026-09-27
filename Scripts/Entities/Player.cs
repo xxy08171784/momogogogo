@@ -4,16 +4,61 @@ using System.Threading.Tasks;
 public partial class Player : CharacterBody2D
 {
 	private Node2D tilePoints;
+	private AnimationPlayer animationPlayer;
 
 	public override void _Ready()
 	{
 		tilePoints = GetNode<Node2D>("../../TilePoints");
-		GlobalPosition = GetNode<Marker2D>("../../TilePoints/Marker2D0").GlobalPosition;
+		animationPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
+		SnapToTile(GameState.Instance.PlayerPosition);
 	}
 
-	// 角色攻击：当前阶段暂不实现
-	public void Attack()
+	// 初始化或读档时直接放到目标格，不播放移动动画。
+	public void SnapToTile(int targetTile)
 	{
+		int normalizedTile = PosMod(targetTile, GameState.TileCount);
+		Marker2D targetNode = tilePoints.GetNodeOrNull<Marker2D>($"Marker2D{normalizedTile}");
+
+		if (targetNode == null)
+		{
+			GD.PrintErr($"找不到 Marker2D{normalizedTile}，无法恢复玩家位置");
+			return;
+		}
+
+		GlobalPosition = targetNode.GlobalPosition;
+		GameState.Instance.PlayerPosition = normalizedTile;
+	}
+
+	// 原地攻击动画由 AnimationPlayer 驱动，不改变角色位置。
+	public async Task PlayAttackAnimation()
+	{
+		animationPlayer.Play("attack");
+		await ToSignal(GetTree().CreateTimer(0.24), SceneTreeTimer.SignalName.Timeout);
+	}
+
+	// 原地受击动画由 AnimationPlayer 驱动。
+	public async Task PlayHitAnimation()
+	{
+		animationPlayer.Play("hit");
+		await ToSignal(GetTree().CreateTimer(0.24), SceneTreeTimer.SignalName.Timeout);
+	}
+
+	// 扣除已经由 BattleSystem 计算好的最终伤害。
+	public int TakeDamage(int damage)
+	{
+		int safeDamage = Mathf.Max(damage, 0);
+		int absorbedByShield = Mathf.Min(GameState.Instance.PlayerShield, safeDamage);
+
+		GameState.Instance.PlayerShield -= absorbedByShield;
+		int remainingDamage = safeDamage - absorbedByShield;
+
+		int previousHp = GameState.Instance.PlayerHp;
+		GameState.Instance.PlayerHp = Mathf.Max(previousHp - remainingDamage, 0);
+
+		if (absorbedByShield > 0)
+			GD.Print($"护盾抵消 {absorbedByShield} 点伤害，剩余护盾 {GameState.Instance.PlayerShield}/{GameState.MaxShield}");
+
+		return previousHp - GameState.Instance.PlayerHp;
 	}
 
 	// 根据步数计算目标格，并完成逐格移动
@@ -88,7 +133,11 @@ public partial class Player : CharacterBody2D
 		switch (choice)
 		{
 			case "hp":
-				GameState.Instance.PlayerHp += amount;
+				GameState.Instance.PlayerMaxHp += amount;
+				GameState.Instance.PlayerHp = Mathf.Min(
+					GameState.Instance.PlayerHp + amount,
+					GameState.Instance.PlayerMaxHp
+				);
 				break;
 			case "atk":
 				GameState.Instance.PlayerAtk += amount;

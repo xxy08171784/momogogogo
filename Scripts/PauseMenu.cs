@@ -128,6 +128,9 @@ public partial class PauseMenu : Control
 
 	private void OnMainMenuPressed()
 	{
+		Map map = GetTree().CurrentScene?.GetNodeOrNull<Map>("Map");
+		map?.SaveIfStable();
+
 		GetTree().Paused = false;
 
 		GetTree().ChangeSceneToFile(
