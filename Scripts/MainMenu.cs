@@ -2,72 +2,82 @@ using Godot;
 
 public partial class MainMenu : Control
 {
-	private Button continueButton;
-	private Button newGameButton;
-	private Button settingsButton;
-	private Button quitButton;
+	private TextureButton continueButton;
+	private TextureButton newGameButton;
+	private TextureButton settingsButton;
+	private TextureButton quitButton;
 
 	public override void _Ready()
 	{
-		continueButton = GetNode<Button>(
+		continueButton = GetNode<TextureButton>(
             "VBoxContainer/ContinueButton"
 		);
 
-		newGameButton = GetNode<Button>(
+		newGameButton = GetNode<TextureButton>(
             "VBoxContainer/NewGameButton"
 		);
 
-		settingsButton = GetNode<Button>(
+		settingsButton = GetNode<TextureButton>(
             "VBoxContainer/SettingsButton"
 		);
 
-		quitButton = GetNode<Button>(
+		quitButton = GetNode<TextureButton>(
             "VBoxContainer/QuitButton"
 		);
 
-		// 根据是否存在存档决定是否显示继续游戏
 		continueButton.Visible = SaveManager.Instance.HasSave();
-		// 连接按钮事件
+
+		// 按下 / 松开
+		continueButton.ButtonDown += () => ButtonDownEffect(continueButton);
+		continueButton.ButtonUp += () => ButtonUpEffect(continueButton);
+
+		newGameButton.ButtonDown += () => ButtonDownEffect(newGameButton);
+		newGameButton.ButtonUp += () => ButtonUpEffect(newGameButton);
+
+		settingsButton.ButtonDown += () => ButtonDownEffect(settingsButton);
+		settingsButton.ButtonUp += () => ButtonUpEffect(settingsButton);
+
+		quitButton.ButtonDown += () => ButtonDownEffect(quitButton);
+		quitButton.ButtonUp += () => ButtonUpEffect(quitButton);
+
+		// 点击事件
 		continueButton.Pressed += OnContinuePressed;
 		newGameButton.Pressed += OnNewGamePressed;
 		settingsButton.Pressed += OnSettingsPressed;
 		quitButton.Pressed += OnQuitPressed;
 	}
 
-	private void OnContinuePressed()
+	private void ButtonDownEffect(TextureButton button)
 	{
-		GD.Print("继续游戏");
-		SaveManager.Instance.RequestContinue();
-
-		GetTree().ChangeSceneToFile(
-            "res://Scenes/Game.tscn"
-		);
+		button.Position += new Vector2(0, 3);
+		button.Scale = new Vector2(0.97f, 0.97f);
 	}
 
-private void OnNewGamePressed()
-{
-	GD.Print("开始新游戏");
+	private void ButtonUpEffect(TextureButton button)
+	{
+		button.Position -= new Vector2(0, 3);
+		button.Scale = new Vector2(1.0f, 1.0f);
+	}
 
-	SaveManager.Instance.StartNewGame();
+	private void OnContinuePressed()
+	{
+		SaveManager.Instance.RequestContinue();
+		GetTree().ChangeSceneToFile("res://Scenes/Game.tscn");
+	}
 
-	GetTree().ChangeSceneToFile(
-        "res://Scenes/Plot1.tscn"
-	);
-}
+	private void OnNewGamePressed()
+	{
+		SaveManager.Instance.StartNewGame();
+		GetTree().ChangeSceneToFile("res://Scenes/Plot1.tscn");
+	}
 
 	private void OnSettingsPressed()
 	{
-		GD.Print("打开游戏设置");
-
-		GetTree().ChangeSceneToFile(
-            "res://Scenes/Settings.tscn"
-		);
+		GetTree().ChangeSceneToFile("res://Scenes/Settings.tscn");
 	}
 
 	private void OnQuitPressed()
 	{
-		GD.Print("退出游戏");
-
 		GetTree().Quit();
 	}
 }

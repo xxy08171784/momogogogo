@@ -4,94 +4,420 @@ using System.Threading.Tasks;
 public partial class Player : CharacterBody2D
 {
 	private Node2D tilePoints;
-	private AnimationPlayer animationPlayer;
+	private AnimatedSprite2D animatedSprite;
+
+	// =========================
+	// 角色方向
+	// =========================
+
+	private enum Direction
+	{
+		Down,
+		Up,
+		Left,
+		Right
+	}
+
+	private Direction currentDirection = Direction.Down;
+
+
+	// =========================
+	// 初始化
+	// =========================
 
 	public override void _Ready()
 	{
-		tilePoints = GetNode<Node2D>("../../TilePoints");
-		animationPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
-		SnapToTile(GameState.Instance.PlayerPosition);
-	}
+		// 获取棋盘格子
+		tilePoints = GetNodeOrNull<Node2D>("../../TilePoints");
 
-	// 初始化或读档时直接放到目标格，不播放移动动画。
-	public void SnapToTile(int targetTile)
-	{
-		int normalizedTile = PosMod(targetTile, GameState.TileCount);
-		Marker2D targetNode = tilePoints.GetNodeOrNull<Marker2D>($"Marker2D{normalizedTile}");
-
-		if (targetNode == null)
+		if (tilePoints == null)
 		{
-			GD.PrintErr($"找不到 Marker2D{normalizedTile}，无法恢复玩家位置");
+			GD.PrintErr("Player：找不到 TilePoints！");
 			return;
 		}
 
-		GlobalPosition = targetNode.GlobalPosition;
-		GameState.Instance.PlayerPosition = normalizedTile;
-	}
+		// 获取角色动画
+		animatedSprite =
+			GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
 
-	// 原地攻击动画由 AnimationPlayer 驱动，不改变角色位置。
-	public async Task PlayAttackAnimation()
-	{
-		animationPlayer.Play("attack");
-		await ToSignal(GetTree().CreateTimer(0.24), SceneTreeTimer.SignalName.Timeout);
-	}
+		if (animatedSprite == null)
+		{
+			GD.PrintErr(
+				"Player：找不到 AnimatedSprite2D！"
+			);
 
-	// 原地受击动画由 AnimationPlayer 驱动。
-	public async Task PlayHitAnimation()
-	{
-		animationPlayer.Play("hit");
-		await ToSignal(GetTree().CreateTimer(0.24), SceneTreeTimer.SignalName.Timeout);
-	}
+			return;
+		}
 
-	// 扣除已经由 BattleSystem 计算好的最终伤害。
-	public int TakeDamage(int damage)
-	{
-		int safeDamage = Mathf.Max(damage, 0);
-		int absorbedByShield = Mathf.Min(GameState.Instance.PlayerShield, safeDamage);
-
-		GameState.Instance.PlayerShield -= absorbedByShield;
-		int remainingDamage = safeDamage - absorbedByShield;
-
-		int previousHp = GameState.Instance.PlayerHp;
-		GameState.Instance.PlayerHp = Mathf.Max(previousHp - remainingDamage, 0);
-
-		if (absorbedByShield > 0)
-			GD.Print($"护盾抵消 {absorbedByShield} 点伤害，剩余护盾 {GameState.Instance.PlayerShield}/{GameState.MaxShield}");
-
-		return previousHp - GameState.Instance.PlayerHp;
-	}
-
-	// 根据步数计算目标格，并完成逐格移动
-	public async Task<int> MoveBySteps(int steps)
-	{
-		int targetTile = PosMod(
-			GameState.Instance.PlayerPosition + steps,
-			GameState.TileCount
+		// 恢复玩家位置
+		SnapToTile(
+			GameState.Instance.PlayerPosition
 		);
 
+		// 游戏开始播放待机动画
+		PlayIdleAnimation();
+	}
+
+
+	// =========================
+	// 待机动画
+	// =========================
+
+	private void PlayIdleAnimation()
+	{
+		if (animatedSprite == null)
+			return;
+
+		if (animatedSprite.SpriteFrames == null)
+		{
+			GD.PrintErr("Player：AnimatedSprite2D 没有 SpriteFrames！");
+			return;
+		}
+
+		if (!animatedSprite.SpriteFrames.HasAnimation("idle"))
+		{
+			GD.PrintErr("Player：找不到 idle 动画！");
+			return;
+		}
+
+		animatedSprite.Play("idle");
+	}
+
+
+	// =========================
+	// 判断行走方向
+	// =========================
+
+	private void UpdateDirection(Vector2 targetPosition)
+	{
+		Vector2 direction =
+			targetPosition - GlobalPosition;
+
+		if (Mathf.Abs(direction.X) >
+			Mathf.Abs(direction.Y))
+		{
+			if (direction.X > 0)
+			{
+				currentDirection = Direction.Right;
+			}
+			else
+			{
+				currentDirection = Direction.Left;
+			}
+		}
+		else
+		{
+			if (direction.Y > 0)
+			{
+				currentDirection = Direction.Down;
+			}
+			else
+			{
+				currentDirection = Direction.Up;
+			}
+		}
+	}
+
+
+	// =========================
+	// 行走动画
+	// =========================
+
+	private void PlayWalkAnimation()
+	{
+		if (animatedSprite == null)
+			return;
+
+		string animationName = "";
+
+		switch (currentDirection)
+		{
+			case Direction.Down:
+				animationName = "walk_down";
+				break;
+
+			case Direction.Up:
+				animationName = "walk_up";
+				break;
+
+			case Direction.Left:
+				animationName = "walk_left";
+				break;
+
+			case Direction.Right:
+				animationName = "walk_right";
+				break;
+		}
+
+		if (animatedSprite.SpriteFrames == null)
+		{
+			GD.PrintErr("Player：没有 SpriteFrames！");
+			return;
+		}
+
+		if (!animatedSprite.SpriteFrames.HasAnimation(
+			animationName))
+		{
+			GD.PrintErr(
+				$"Player：找不到动画 {animationName}"
+			);
+
+			return;
+		}
+
+		animatedSprite.Play(animationName);
+	}
+
+
+	// =========================
+	// 初始化 / 读档
+	// =========================
+
+	public void SnapToTile(int targetTile)
+	{
+		if (tilePoints == null)
+		{
+			GD.PrintErr("Player：TilePoints 没有初始化！");
+			return;
+		}
+
+		int normalizedTile =
+			PosMod(
+				targetTile,
+				GameState.TileCount
+			);
+
+		Marker2D targetNode =
+			tilePoints.GetNodeOrNull<Marker2D>(
+				$"Marker2D{normalizedTile}"
+			);
+
+		if (targetNode == null)
+		{
+			GD.PrintErr(
+				$"找不到 Marker2D{normalizedTile}，无法恢复玩家位置"
+			);
+
+			return;
+		}
+
+		GlobalPosition =
+			targetNode.GlobalPosition;
+
+		GameState.Instance.PlayerPosition =
+			normalizedTile;
+	}
+
+
+	// =========================
+	// 攻击动画
+	// =========================
+
+	public async Task PlayAttackAnimation()
+	{
+		if (animatedSprite == null)
+		{
+			GD.PrintErr(
+				"Player：无法播放攻击动画，AnimatedSprite2D 为 null！"
+			);
+
+			return;
+		}
+
+		if (animatedSprite.SpriteFrames == null)
+		{
+			GD.PrintErr(
+				"Player：无法播放攻击动画，没有 SpriteFrames！"
+			);
+
+			return;
+		}
+
+		if (!animatedSprite.SpriteFrames.HasAnimation("attack"))
+		{
+			GD.PrintErr(
+				"Player：找不到 attack 动画！"
+			);
+
+			return;
+		}
+
+		animatedSprite.Play("attack");
+
+		// 等待攻击动画播放完成
+		await ToSignal(
+			GetTree().CreateTimer(0.24),
+			SceneTreeTimer.SignalName.Timeout
+		);
+
+		// 攻击结束回到待机
+		PlayIdleAnimation();
+	}
+
+
+	// =========================
+	// 受击动画
+	// =========================
+
+	public async Task PlayHitAnimation()
+	{
+		if (animatedSprite == null)
+		{
+			GD.PrintErr(
+				"Player：无法播放受击动画，AnimatedSprite2D 为 null！"
+			);
+
+			return;
+		}
+
+		if (animatedSprite.SpriteFrames == null)
+		{
+			GD.PrintErr(
+				"Player：无法播放受击动画，没有 SpriteFrames！"
+			);
+
+			return;
+		}
+
+		if (!animatedSprite.SpriteFrames.HasAnimation("hit"))
+		{
+			GD.PrintErr(
+				"Player：找不到 hit 动画！"
+			);
+
+			return;
+		}
+
+		animatedSprite.Play("hit");
+
+		// 等待受击动画
+		await ToSignal(
+			GetTree().CreateTimer(0.24),
+			SceneTreeTimer.SignalName.Timeout
+		);
+
+		// 受击结束回到待机
+		PlayIdleAnimation();
+	}
+
+
+	// =========================
+	// 受到伤害
+	// =========================
+
+	public int TakeDamage(int damage)
+	{
+		int safeDamage =
+			Mathf.Max(damage, 0);
+
+		int absorbedByShield =
+			Mathf.Min(
+				GameState.Instance.PlayerShield,
+				safeDamage
+			);
+
+		GameState.Instance.PlayerShield -=
+			absorbedByShield;
+
+		int remainingDamage =
+			safeDamage - absorbedByShield;
+
+		int previousHp =
+			GameState.Instance.PlayerHp;
+
+		GameState.Instance.PlayerHp =
+			Mathf.Max(
+				previousHp - remainingDamage,
+				0
+			);
+
+		if (absorbedByShield > 0)
+		{
+			GD.Print(
+				$"护盾抵消 {absorbedByShield} 点伤害，剩余护盾 {GameState.Instance.PlayerShield}/{GameState.MaxShield}"
+			);
+		}
+
+		return previousHp -
+			   GameState.Instance.PlayerHp;
+	}
+
+
+	// =========================
+	// 根据步数移动
+	// =========================
+
+	public async Task<int> MoveBySteps(int steps)
+	{
+		int targetTile =
+			PosMod(
+				GameState.Instance.PlayerPosition + steps,
+				GameState.TileCount
+			);
+
 		await MoveToPosition(targetTile);
+
 		return targetTile;
 	}
 
-	// 视觉移动
+
+	// =========================
+	// 逐格移动
+	// =========================
+
 	public async Task MoveToPosition(int targetTile)
 	{
-		int startPosition = GameState.Instance.PlayerPosition;
-		int totalSteps = GetForwardSteps(
-			startPosition,
-			targetTile,
-			GameState.TileCount
-		);
+		if (tilePoints == null)
+		{
+			GD.PrintErr(
+				"Player：无法移动，TilePoints 为 null！"
+			);
+
+			return;
+		}
+
+		int startPosition =
+			GameState.Instance.PlayerPosition;
+
+		int totalSteps =
+			GetForwardSteps(
+				startPosition,
+				targetTile,
+				GameState.TileCount
+			);
 
 		for (int i = 0; i < totalSteps; i++)
 		{
-			int nextTile = (startPosition + i + 1) % GameState.TileCount;
-			Marker2D targetNode = tilePoints.GetNodeOrNull<Marker2D>($"Marker2D{nextTile}");
+			int nextTile =
+				(startPosition + i + 1)
+				% GameState.TileCount;
+
+			Marker2D targetNode =
+				tilePoints.GetNodeOrNull<Marker2D>(
+					$"Marker2D{nextTile}"
+				);
 
 			if (targetNode == null)
-				continue;
+			{
+				GD.PrintErr(
+					$"找不到 Marker2D{nextTile}"
+				);
 
-			Tween tween = CreateTween();
+				continue;
+			}
+
+			// 判断这一格的移动方向
+			UpdateDirection(
+				targetNode.GlobalPosition
+			);
+
+			// 播放对应方向的行走动画
+			PlayWalkAnimation();
+
+			// 移动到下一格
+			Tween tween =
+				CreateTween();
+
 			tween.TweenProperty(
 				this,
 				"global_position",
@@ -99,53 +425,113 @@ public partial class Player : CharacterBody2D
 				0.2
 			);
 
-			await ToSignal(tween, Tween.SignalName.Finished);
+			await ToSignal(
+				tween,
+				Tween.SignalName.Finished
+			);
 		}
 
-		// 走完后再更新逻辑位置
-		GameState.Instance.PlayerPosition = targetTile;
+		// 更新逻辑位置
+		GameState.Instance.PlayerPosition =
+			targetTile;
+
+		// 移动结束后回到待机
+		PlayIdleAnimation();
 	}
 
-	private static int GetForwardSteps(int fromPosition, int toPosition, int tileCount)
+
+	// =========================
+	// 环形棋盘距离
+	// =========================
+
+	private static int GetForwardSteps(
+		int fromPosition,
+		int toPosition,
+		int tileCount)
 	{
-		return PosMod(toPosition - fromPosition, tileCount);
+		return PosMod(
+			toPosition - fromPosition,
+			tileCount
+		);
 	}
 
-	private static int PosMod(int value, int modulus)
+
+	// =========================
+	// 正数取模
+	// =========================
+
+	private static int PosMod(
+		int value,
+		int modulus)
 	{
-		int result = value % modulus;
-		return result < 0 ? result + modulus : result;
+		int result =
+			value % modulus;
+
+		return result < 0
+			? result + modulus
+			: result;
 	}
 
+
+	// =========================
 	// 角色升级
-	public bool Upgrade(string choice, int amount = 1)
+	// =========================
+
+	public bool Upgrade(
+		string choice,
+		int amount = 1)
 	{
 		if (!PickUpgrade(choice, amount))
 			return false;
 
 		GameState.Instance.PlayerLevel += 1;
+
 		return true;
 	}
 
-	// 升级选择接口。具体成长数值后续按策划规则调整。
-	public bool PickUpgrade(string choice, int amount = 1)
+
+	// =========================
+	// 选择升级
+	// =========================
+
+	public bool PickUpgrade(
+		string choice,
+		int amount = 1)
 	{
 		switch (choice)
 		{
 			case "hp":
-				GameState.Instance.PlayerMaxHp += amount;
-				GameState.Instance.PlayerHp = Mathf.Min(
-					GameState.Instance.PlayerHp + amount,
-					GameState.Instance.PlayerMaxHp
-				);
+
+				GameState.Instance.PlayerMaxHp +=
+					amount;
+
+				GameState.Instance.PlayerHp =
+					Mathf.Min(
+						GameState.Instance.PlayerHp + amount,
+						GameState.Instance.PlayerMaxHp
+					);
+
 				break;
+
+
 			case "atk":
-				GameState.Instance.PlayerAtk += amount;
+
+				GameState.Instance.PlayerAtk +=
+					amount;
+
 				break;
+
+
 			case "def":
-				GameState.Instance.PlayerDef += amount;
+
+				GameState.Instance.PlayerDef +=
+					amount;
+
 				break;
+
+
 			default:
+
 				return false;
 		}
 

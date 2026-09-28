@@ -12,15 +12,15 @@
 
 ```text
 ReadyToRoll
-    ↓ 玩家点击“掷骰子”
+	↓ 玩家点击“掷骰子”
 Rolling
-    ↓ 红蓝骰同时生成结果并播放动画
+	↓ 红蓝骰同时生成结果并播放动画
 WaitingForDiceSelection
-    ↓ UI / Controller 把玩家选择的 red / blue 传给玩法层
+	↓ UI / Controller 把玩家选择的 red / blue 传给玩法层
 Moving
-    ↓ Player 根据骰子点数计算目标格，并逐格 Tween 移动
+	↓ Player 根据骰子点数计算目标格，并逐格 Tween 移动
 Resolving
-    ↓ Map 根据落脚格执行地块结算
+	↓ Map 根据落脚格执行地块结算
 ReadyToRoll
 ```
 
@@ -65,11 +65,11 @@ CurrentTurnState
 
 ```csharp
 enum TurnState {
-    ReadyToRoll,
-    Rolling,
-    WaitingForDiceSelection,
-    Moving,
-    Resolving
+	ReadyToRoll,
+	Rolling,
+	WaitingForDiceSelection,
+	Moving,
+	Resolving
 }
 ```
 
@@ -204,10 +204,10 @@ Map
 ├── UI
 │   └── RollButton
 └── TilePoints
-    ├── Marker2D0
-    ├── Marker2D1
-    ├── ...
-    └── Marker2D11
+	├── Marker2D0
+	├── Marker2D1
+	├── ...
+	└── Marker2D11
 ```
 
 其中：
@@ -482,7 +482,7 @@ player.Upgrade(choice, amount)
 - 玩家点击红骰 / 蓝骰的 UI 交互。
   - 建议由 UI / Controller 负责。
   - UI 最终只需要调用：
-    `HandleDiceSelected("red")` 或 `HandleDiceSelected("blue")`。
+	`HandleDiceSelected("red")` 或 `HandleDiceSelected("blue")`。
 
 - WHITE 地块对玩家的具体效果。
 - BLACK 地块对玩家的具体效果。

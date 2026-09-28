@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://bpbp3qmb71ubj"]
 
 [ext_resource type="Script" uid="uid://rwib3oh3folw" path="res://Scripts/Settings.cs" id="1_4hxq3"]
-[ext_resource type="SystemFont" path="res://Style/ChineseUIFont.tres" id="1_cnfont"]
 [ext_resource type="StyleBox" uid="uid://b0hsbiqif3hyt" path="res://Style/VolumeSlider.tres" id="2_flfri"]
+[ext_resource type="Texture2D" uid="uid://cpe3kqvvbxa4w" path="res://Image/Button/Back.png" id="2_w1nw0"]
 [ext_resource type="StyleBox" uid="uid://bsye721jo6b5a" path="res://Style/Grabber.tres" id="3_yrknh"]
 
 [node name="Settings" type="Control" unique_id=182393577]
@@ -22,7 +22,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="BackButton" type="Button" parent="." unique_id=1403156893]
+[node name="BackButton" type="TextureButton" parent="." unique_id=1194834531]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 1
 anchors_preset = -1
@@ -36,9 +36,9 @@ offset_right = -183.0
 offset_bottom = -121.0
 grow_horizontal = 0
 grow_vertical = 0
-theme_override_fonts/font = ExtResource("1_cnfont")
-theme_override_font_sizes/font_size = 28
-text = "返回主菜单"
+texture_normal = ExtResource("2_w1nw0")
+ignore_texture_size = true
+stretch_mode = 5
 
 [node name="VolumeSlider" type="HSlider" parent="." unique_id=1794340439]
 custom_minimum_size = Vector2(1000, 100)

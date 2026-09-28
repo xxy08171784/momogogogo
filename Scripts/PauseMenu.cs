@@ -5,10 +5,10 @@ public partial class PauseMenu : Control
 	private Control pausePanel;
 	private Control settingsPanel;
 
-	private Button continueButton;
-	private Button settingsButton;
-	private Button mainMenuButton;
-	private Button backButton;
+	private TextureButton continueButton;
+	private TextureButton settingsButton;
+	private TextureButton mainMenuButton;
+	private TextureButton backButton;
 
 	private HSlider volumeSlider;
 
@@ -17,13 +17,40 @@ public partial class PauseMenu : Control
 		pausePanel = GetNode<Control>("PausePanel");
 		settingsPanel = GetNode<Control>("SettingsPanel");
 
-		continueButton = GetNode<Button>("PausePanel/ContinueButton");
-		settingsButton = GetNode<Button>("PausePanel/SettingsButton");
-		mainMenuButton = GetNode<Button>("PausePanel/MainMenuButton");
+		continueButton = GetNode<TextureButton>(
+			"PausePanel/ContinueButton"
+		);
 
-		backButton = GetNode<Button>("SettingsPanel/BackButton");
-		volumeSlider = GetNode<HSlider>("SettingsPanel/VolumeSlider");
+		settingsButton = GetNode<TextureButton>(
+			"PausePanel/SettingsButton"
+		);
 
+		mainMenuButton = GetNode<TextureButton>(
+			"PausePanel/MainMenuButton"
+		);
+
+		backButton = GetNode<TextureButton>(
+			"SettingsPanel/BackButton"
+		);
+
+		volumeSlider = GetNode<HSlider>(
+			"SettingsPanel/VolumeSlider"
+		);
+
+		// 按下 / 松开
+		continueButton.ButtonDown += () => ButtonDownEffect(continueButton);
+		continueButton.ButtonUp += () => ButtonUpEffect(continueButton);
+
+		settingsButton.ButtonDown += () => ButtonDownEffect(settingsButton);
+		settingsButton.ButtonUp += () => ButtonUpEffect(settingsButton);
+
+		mainMenuButton.ButtonDown += () => ButtonDownEffect(mainMenuButton);
+		mainMenuButton.ButtonUp += () => ButtonUpEffect(mainMenuButton);
+
+		backButton.ButtonDown += () => ButtonDownEffect(backButton);
+		backButton.ButtonUp += () => ButtonUpEffect(backButton);
+
+		// 点击事件
 		continueButton.Pressed += OnContinuePressed;
 		settingsButton.Pressed += OnSettingsPressed;
 		mainMenuButton.Pressed += OnMainMenuPressed;
@@ -40,9 +67,19 @@ public partial class PauseMenu : Control
 		volumeSlider.ValueChanged += OnVolumeChanged;
 	}
 
-	// =========================
-	// ESC
-	// =========================
+	// 按下效果
+	private void ButtonDownEffect(TextureButton button)
+	{
+		button.Position += new Vector2(0, 3);
+		button.Scale = new Vector2(0.97f, 0.97f);
+	}
+
+	// 松开效果
+	private void ButtonUpEffect(TextureButton button)
+	{
+		button.Position -= new Vector2(0, 3);
+		button.Scale = new Vector2(1.0f, 1.0f);
+	}
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
@@ -52,24 +89,16 @@ public partial class PauseMenu : Control
 		{
 			if (settingsPanel.Visible)
 			{
-				// 如果正在设置界面
-				// ESC 返回暂停菜单
 				HideSettings();
 			}
 			else
 			{
-				// 如果正在暂停菜单
-				// ESC 继续游戏
 				HidePauseMenu();
 			}
 
 			GetViewport().SetInputAsHandled();
 		}
 	}
-
-	// =========================
-	// 暂停菜单
-	// =========================
 
 	public void ShowPauseMenu()
 	{
@@ -88,28 +117,16 @@ public partial class PauseMenu : Control
 		GetTree().Paused = false;
 	}
 
-	// =========================
-	// 继续游戏
-	// =========================
-
 	private void OnContinuePressed()
 	{
 		HidePauseMenu();
 	}
-
-	// =========================
-	// 打开设置
-	// =========================
 
 	private void OnSettingsPressed()
 	{
 		pausePanel.Hide();
 		settingsPanel.Show();
 	}
-
-	// =========================
-	// 设置界面返回
-	// =========================
 
 	private void OnSettingsBackPressed()
 	{
@@ -122,10 +139,6 @@ public partial class PauseMenu : Control
 		pausePanel.Show();
 	}
 
-	// =========================
-	// 返回主菜单
-	// =========================
-
 	private void OnMainMenuPressed()
 	{
 		Map map = GetTree().CurrentScene?.GetNodeOrNull<Map>("Map");
@@ -137,10 +150,6 @@ public partial class PauseMenu : Control
 			"res://Scenes/MainMenu.tscn"
 		);
 	}
-
-	// =========================
-	// 音量
-	// =========================
 
 	private void OnVolumeChanged(double value)
 	{
