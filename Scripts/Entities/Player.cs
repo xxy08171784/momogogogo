@@ -456,6 +456,18 @@ public partial class Player : CharacterBody2D
 			   GameState.Instance.PlayerHp;
 	}
 
+	// 真实伤害：直接扣生命，不经过防御和护盾。
+	public int TakeTrueDamage(int damage)
+	{
+		int safeDamage = Mathf.Max(damage, 0);
+		int previousHp = GameState.Instance.PlayerHp;
+
+		GameState.Instance.PlayerHp =
+			Mathf.Max(previousHp - safeDamage, 0);
+
+		return previousHp - GameState.Instance.PlayerHp;
+	}
+
 
 	// =========================
 	// 根据步数移动
@@ -539,12 +551,17 @@ public partial class Player : CharacterBody2D
 				this,
 				"global_position",
 				targetNode.GlobalPosition,
-				0.2
+				0.5
 			);
 
 			await ToSignal(
 				tween,
 				Tween.SignalName.Finished
+			);
+
+			await ToSignal(
+				GetTree().CreateTimer(0.2),
+				SceneTreeTimer.SignalName.Timeout
 			);
 		}
 

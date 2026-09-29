@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Threading.Tasks;
 
 public partial class Goblin : Node2D
@@ -20,10 +21,14 @@ public partial class Goblin : Node2D
 
 	public string DisplayName { get; private set; } = "哥布林兄弟";
 	public int CurrentHp { get; private set; }
+	public int CurrentActionIndex { get; private set; }
+	public int NextAttackMultiplier { get; private set; } = 1;
+	public int ActionCount => actions.Length;
 
 	private ProgressBar hpBar;
 	private Label hpLabel;
 	private AnimationPlayer animationPlayer;
+	private MonsterAction[] actions = Array.Empty<MonsterAction>();
 
 	public override void _Ready()
 	{
@@ -36,17 +41,73 @@ public partial class Goblin : Node2D
 		animationPlayer.Play("idle");
 	}
 
-	public void ConfigureBoss(string displayName, int maxHp, int atk, int def)
+	public void ConfigureBoss(
+		string displayName,
+		int maxHp,
+		int atk,
+		int def,
+		MonsterAction[] monsterActions)
 	{
 		DisplayName = displayName;
 		MaxHp = Mathf.Max(maxHp, 1);
 		Atk = Mathf.Max(atk, 0);
 		Def = Mathf.Max(def, 0);
 		CurrentHp = MaxHp;
+		actions = monsterActions ?? Array.Empty<MonsterAction>();
+		CurrentActionIndex = 0;
+		NextAttackMultiplier = 1;
 
 		UpdateHealthDisplay();
 		EmitSignal(SignalName.HpChanged, CurrentHp, MaxHp);
 		animationPlayer.Play("idle");
+	}
+
+	public MonsterAction GetCurrentAction()
+	{
+		if (actions.Length == 0)
+		{
+			return new MonsterAction
+			{
+				Name = "普通攻击",
+				Description = $"造成{Atk}点伤害",
+				Damage = Atk
+			};
+		}
+
+		int safeIndex = PosMod(CurrentActionIndex, actions.Length);
+		return actions[safeIndex];
+	}
+
+	public void AdvanceAction()
+	{
+		if (actions.Length == 0)
+			return;
+
+		CurrentActionIndex = (CurrentActionIndex + 1) % actions.Length;
+	}
+
+	public void SetNextAttackMultiplier(int multiplier)
+	{
+		NextAttackMultiplier = Mathf.Max(multiplier, 1);
+	}
+
+	public int ConsumeNextAttackMultiplier()
+	{
+		int multiplier = Mathf.Max(NextAttackMultiplier, 1);
+		NextAttackMultiplier = 1;
+		return multiplier;
+	}
+
+	public int Heal(int amount)
+	{
+		int safeAmount = Mathf.Max(amount, 0);
+		int previousHp = CurrentHp;
+		CurrentHp = Mathf.Min(CurrentHp + safeAmount, MaxHp);
+		int actualHeal = CurrentHp - previousHp;
+
+		UpdateHealthDisplay();
+		EmitSignal(SignalName.HpChanged, CurrentHp, MaxHp);
+		return actualHeal;
 	}
 
 	public int TakeDamage(int damage)
@@ -71,6 +132,20 @@ public partial class Goblin : Node2D
 		CurrentHp = Mathf.Clamp(currentHp, 0, MaxHp);
 		UpdateHealthDisplay();
 		EmitSignal(SignalName.HpChanged, CurrentHp, MaxHp);
+	}
+
+	public void RestoreCombatState(int actionIndex, int nextAttackMultiplier)
+	{
+		if (actions.Length == 0)
+		{
+			CurrentActionIndex = 0;
+		}
+		else
+		{
+			CurrentActionIndex = PosMod(actionIndex, actions.Length);
+		}
+
+		NextAttackMultiplier = Mathf.Max(nextAttackMultiplier, 1);
 	}
 
 	public bool IsDead() => CurrentHp <= 0;
@@ -104,5 +179,11 @@ public partial class Goblin : Node2D
 		hpBar.MaxValue = MaxHp;
 		hpBar.Value = CurrentHp;
 		hpLabel.Text = $"{CurrentHp} / {MaxHp}";
+	}
+
+	private static int PosMod(int value, int modulus)
+	{
+		int result = value % modulus;
+		return result < 0 ? result + modulus : result;
 	}
 }

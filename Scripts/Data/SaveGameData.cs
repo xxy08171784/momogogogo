@@ -3,7 +3,7 @@ using System.Collections.Generic;
 // 纯存档数据，不保存任何 Godot Node 引用。
 public sealed class SaveGameData
 {
-	public int Version { get; set; } = 1;
+	public int Version { get; set; } = 3;
 	public long SavedAtUnixTime { get; set; }
 	public PlayerSaveData Player { get; set; } = new();
 	public DiceSaveData Dice { get; set; } = new();
@@ -22,6 +22,9 @@ public sealed class PlayerSaveData
 	public int TempAtk { get; set; }
 	public int TempDef { get; set; }
 	public int Position { get; set; }
+	public bool SkipMovementNextTurn { get; set; }
+	public bool ChargeActive { get; set; }
+	public int FreeActionsPending { get; set; }
 }
 
 public sealed class DiceSaveData
@@ -35,6 +38,8 @@ public sealed class BossSaveData
 {
 	public int Index { get; set; }
 	public int CurrentHp { get; set; }
+	public int ActionIndex { get; set; }
+	public int NextAttackMultiplier { get; set; } = 1;
 }
 
 public sealed class TileSaveData

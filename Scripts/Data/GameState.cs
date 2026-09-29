@@ -46,9 +46,9 @@ public partial class GameState : Node
 	// 已蓄力：下一回合选红骰生效，选蓝骰作废
 	public bool ChargeActive;
 
-	// 幸运：积攒的"免费行动"次数（下一次玩家行动时怪物不反击）
+	// 幸运：积攒的"免费行动"次数（下一次玩家行动时怪物跳过主动行动）
 	public int FreeActionsPending;
-	// 幸运：本回合战斗怪物不反击（玩家行动开始时由 FreeActionsPending 提升而来）
+	// 幸运：本回合怪物跳过主动行动（玩家行动开始时由 FreeActionsPending 提升而来）
 	public bool NoCounterThisBattle;
 
 	// 每次地块结算前调用，清掉上一回合遗留的战斗修正。
@@ -62,6 +62,7 @@ public partial class GameState : Node
 	public int PlayerPosition { get; set; }
 	public TurnState CurrentTurnState { get; set; } = TurnState.ReadyToRoll;
 	public string DiceColor { get; set; } = "red";
+	public bool SkipMovementNextTurn { get; set; }
 
 	public Dictionary<string, int> Dice { get; } = new()
 	{
@@ -96,6 +97,7 @@ public partial class GameState : Node
 		DiceColor = "red";
 		Dice["red"] = 0;
 		Dice["blue"] = 0;
+		SkipMovementNextTurn = false;
 	}
 
 	public void ResetTempStats()

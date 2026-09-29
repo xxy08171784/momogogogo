@@ -5,7 +5,7 @@ using System.Text.Json;
 
 public partial class SaveManager : Node
 {
-	public const int CurrentSaveVersion = 1;
+	public const int CurrentSaveVersion = 3;
 
 	// 全局访问点，其他脚本通过 SaveManager.Instance 调用
 	public static SaveManager Instance { get; private set; }
@@ -58,7 +58,12 @@ public partial class SaveManager : Node
 		return LoadGame(tiles, out bossData);
 	}
 
-	public bool SaveGame(IReadOnlyList<MapTileData> tiles, int bossIndex, int bossCurrentHp)
+	public bool SaveGame(
+		IReadOnlyList<MapTileData> tiles,
+		int bossIndex,
+		int bossCurrentHp,
+		int bossActionIndex,
+		int bossNextAttackMultiplier)
 	{
 		if (GameState.Instance == null || bossIndex < 0 || bossCurrentHp <= 0)
 			return false;
@@ -80,7 +85,10 @@ public partial class SaveManager : Node
 					Shield = state.PlayerShield,
 					TempAtk = state.TempAtk,
 					TempDef = state.TempDef,
-					Position = state.PlayerPosition
+					Position = state.PlayerPosition,
+					SkipMovementNextTurn = state.SkipMovementNextTurn,
+					ChargeActive = state.ChargeActive,
+					FreeActionsPending = state.FreeActionsPending
 				},
 				Dice = new DiceSaveData
 				{
@@ -91,7 +99,9 @@ public partial class SaveManager : Node
 				Boss = new BossSaveData
 				{
 					Index = bossIndex,
-					CurrentHp = bossCurrentHp
+					CurrentHp = bossCurrentHp,
+					ActionIndex = bossActionIndex,
+					NextAttackMultiplier = Math.Max(bossNextAttackMultiplier, 1)
 				}
 			};
 
@@ -181,13 +191,14 @@ public partial class SaveManager : Node
 		state.FlatDamageBonus = 0;
 		state.SkipPlayerAttack = false;
 		state.AttackMultiplier = 1f;
-		state.ChargeActive = false;
-		state.FreeActionsPending = 0;
+		state.ChargeActive = data.Player.ChargeActive;
+		state.FreeActionsPending = Math.Max(data.Player.FreeActionsPending, 0);
 		state.NoCounterThisBattle = false;
 		state.PlayerPosition = PosMod(data.Player.Position, GameState.TileCount);
 		state.DiceColor = data.Dice.SelectedColor == "blue" ? "blue" : "red";
 		state.Dice["red"] = data.Dice.RedValue;
 		state.Dice["blue"] = data.Dice.BlueValue;
+		state.SkipMovementNextTurn = data.Player.SkipMovementNextTurn;
 		state.CurrentTurnState = GameState.TurnState.ReadyToRoll;
 
 		for (int i = 0; i < tiles.Count; i++)

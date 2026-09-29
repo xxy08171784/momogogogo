@@ -96,17 +96,18 @@ text = "玩家属性
 [node name="GoblinStatsPanel" type="ColorRect" parent="UI" unique_id=747507262]
 offset_left = 1080.0
 offset_top = 571.0
-offset_right = 1199.0
-offset_bottom = 730.0
+offset_right = 1226.0
+offset_bottom = 778.0
 mouse_filter = 2
 color = Color(0.09, 0.035, 0.035, 0.84)
 
 [node name="StatsLabel" type="Label" parent="UI/GoblinStatsPanel" unique_id=1647328092]
+custom_minimum_size = Vector2(1, 1)
 layout_mode = 0
 offset_left = 12.0
 offset_top = 8.0
-offset_right = 127.0
-offset_bottom = 153.0
+offset_right = 184.0
+offset_bottom = 208.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 18
 text = "第 1 / 5 只
@@ -114,6 +115,7 @@ text = "第 1 / 5 只
 HP = 15 / 15
 攻击 = 2
 防御 = 0"
+autowrap_mode = 2
 
 [node name="UpgradePanel" type="ColorRect" parent="UI" unique_id=2060356094]
 visible = false

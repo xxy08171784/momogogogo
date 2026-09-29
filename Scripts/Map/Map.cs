@@ -249,9 +249,10 @@ public partial class Map : Node2D
 	{
 		goblin = bossRushSystem.RestoreBoss(
 			savedBoss.Index,
-			savedBoss.CurrentHp
+			savedBoss.CurrentHp,
+			savedBoss.ActionIndex,
+			savedBoss.NextAttackMultiplier
 		);
-
 		if (goblin == null)
 		{
 			GD.PrintErr(
@@ -280,7 +281,9 @@ public partial class Map : Node2D
 		return SaveManager.Instance.SaveGame(
 			allTiles,
 			bossRushSystem.CurrentBossIndex,
-			goblin.CurrentHp
+			goblin.CurrentHp,
+			goblin.CurrentActionIndex,
+			goblin.NextAttackMultiplier
 		);
 	}
 
@@ -323,12 +326,23 @@ public partial class Map : Node2D
 			return;
 		}
 
+		MonsterAction action = goblin.GetCurrentAction();
+		string chargeText = goblin.NextAttackMultiplier > 1
+			? $"\n蓄力：下一次攻击 x{goblin.NextAttackMultiplier}"
+			: "";
+		string lockText = GameState.Instance.SkipMovementNextTurn
+			? "\n⚠ 玩家下回合只能原地战斗"
+			: "";
+
 		bossStatsLabel.Text =
 			$"第 {bossRushSystem.CurrentBossNumber} / {bossRushSystem.BossCount} 只\n" +
 			$"{goblin.DisplayName}\n" +
 			$"HP = {goblin.CurrentHp} / {goblin.MaxHp}\n" +
-			$"攻击 = {goblin.Atk}\n" +
-			$"防御 = {goblin.Def}";
+			$"防御 = {goblin.Def}\n" +
+			$"行动 {goblin.CurrentActionIndex + 1}/{goblin.ActionCount}：{action.Name}\n" +
+			$"{action.Description}" +
+			chargeText +
+			lockText;
 	}
 
 	private void OnBossHpChanged(
@@ -356,6 +370,7 @@ public partial class Map : Node2D
 	)
 	{
 		GameState.Instance.ResetTempStats();
+		GameState.Instance.ResetTileTurnModifiers();
 
 		UpdatePlayerStatsDisplay();
 
@@ -536,18 +551,36 @@ public partial class Map : Node2D
 		)
 			return;
 
-		SetTurnState(
-			GameState.TurnState.Rolling
-		);
-
-		// 幸运"免费行动"：若积攒了免费行动，本回合战斗怪物不反击
+		// 幸运"免费行动"：下一次玩家行动中，怪物跳过自己的主动行动。
+		// 黑化领域的原地战斗同样属于一次玩家行动，因此也可以消耗幸运。
 		if (GameState.Instance.FreeActionsPending > 0)
 		{
 			GameState.Instance.FreeActionsPending -= 1;
 			GameState.Instance.NoCounterThisBattle = true;
-			GD.Print("幸运：本次行动怪物不反击");
+			GD.Print("幸运：本次行动怪物跳过行动");
 		}
 
+		if (GameState.Instance.SkipMovementNextTurn)
+		{
+			// 黑化领域：本回合完全跳过骰子、移动和地块收益，
+			// TempAtk/TempDef 保持 0，直接使用玩家基础攻防进入战斗。
+			GameState.Instance.SkipMovementNextTurn = false;
+			GameState.Instance.ResetTempStats();
+			GameState.Instance.ResetTileTurnModifiers();
+			UpdatePlayerStatsDisplay();
+			UpdateBossStatsDisplay();
+
+			GD.Print("黑化领域生效：玩家本回合原地以基础攻防进行战斗");
+			SetTurnState(GameState.TurnState.Battling);
+
+			BattleSystem.BattleOutcome lockedOutcome = await battleSystem.ResolveTurn();
+			UpdatePlayerHealthDisplay();
+			UpdateBossStatsDisplay();
+			FinishTurn(lockedOutcome);
+			return;
+		}
+
+		SetTurnState(GameState.TurnState.Rolling);
 		GameState.Instance.ResetTempStats();
   
 		UpdatePlayerStatsDisplay();
