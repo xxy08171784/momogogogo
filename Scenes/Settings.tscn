@@ -4,6 +4,7 @@
 [ext_resource type="StyleBox" uid="uid://b0hsbiqif3hyt" path="res://Style/VolumeSlider.tres" id="2_flfri"]
 [ext_resource type="Texture2D" uid="uid://cpe3kqvvbxa4w" path="res://Image/Button/Back.png" id="2_w1nw0"]
 [ext_resource type="StyleBox" uid="uid://bsye721jo6b5a" path="res://Style/Grabber.tres" id="3_yrknh"]
+[ext_resource type="AudioStream" uid="uid://cq7ugx5hq5u4f" path="res://Audio/SFX/UI/Button3.wav" id="5_mjqtt"]
 
 [node name="Settings" type="Control" unique_id=182393577]
 layout_mode = 3
@@ -51,3 +52,6 @@ theme_override_styles/slider = ExtResource("2_flfri")
 theme_override_styles/grabber_area = ExtResource("3_yrknh")
 theme_override_styles/grabber_area_highlight = ExtResource("3_yrknh")
 value = 50.0
+
+[node name="ButtonSound" type="AudioStreamPlayer" parent="." unique_id=691711850]
+stream = ExtResource("5_mjqtt")

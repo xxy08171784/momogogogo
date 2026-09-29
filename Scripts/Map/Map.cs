@@ -16,6 +16,9 @@ public partial class Map : Node2D
 	private Dice blueDice;
 	private Button rollButton;
 
+	// 摇骰子音效
+	private AudioStreamPlayer diceRollSound;
+
 	private ProgressBar playerHpBar;
 	private Label playerHpLabel;
 	private Label playerStatsLabel;
@@ -28,23 +31,22 @@ public partial class Map : Node2D
 	private Button upgradeDefenseButton;
 	private Button upgradeHpButton;
 	private Node2D tilePointsNode;
-	private Node2D tileLevelLabelsNode;
-	private readonly List<Label> tileLevelLabels = new();
+	private TileSystem tileSystem;
 
 	private static readonly MapTileData.TileColor[] TileColors =
 	{
-		MapTileData.TileColor.White, // 1
-		MapTileData.TileColor.Red,   // 2
-		MapTileData.TileColor.Blue,  // 3
-		MapTileData.TileColor.White, // 4
-		MapTileData.TileColor.Red,   // 5
-		MapTileData.TileColor.Blue,  // 6
-		MapTileData.TileColor.Black, // 7
-		MapTileData.TileColor.Red,   // 8
-		MapTileData.TileColor.White, // 9
-		MapTileData.TileColor.Blue,  // 10
-		MapTileData.TileColor.Red,   // 11
-		MapTileData.TileColor.White  // 12
+		MapTileData.TileColor.White,
+		MapTileData.TileColor.Red,
+		MapTileData.TileColor.Blue,
+		MapTileData.TileColor.White,
+		MapTileData.TileColor.Red,
+		MapTileData.TileColor.Blue,
+		MapTileData.TileColor.Black,
+		MapTileData.TileColor.Red,
+		MapTileData.TileColor.White,
+		MapTileData.TileColor.Blue,
+		MapTileData.TileColor.Red,
+		MapTileData.TileColor.White
 	};
 
 	private readonly List<MapTileData> allTiles = new();
@@ -58,6 +60,9 @@ public partial class Map : Node2D
 		blueDice = GetNode<Dice>("Entities/BlueDice");
 		rollButton = GetNode<Button>("UI/RollButton");
 
+		// 获取摇骰子音效节点
+		diceRollSound = GetNode<AudioStreamPlayer>("DiceRollSound");
+
 		playerHpBar = GetNode<ProgressBar>("UI/PlayerHealthBar");
 		playerHpLabel = GetNode<Label>("UI/PlayerHealthBar/HpLabel");
 		playerStatsLabel = GetNode<Label>("UI/PlayerStatsPanel/StatsLabel");
@@ -69,12 +74,13 @@ public partial class Map : Node2D
 		upgradeAttackButton = GetNode<Button>("UI/UpgradePanel/AttackButton");
 		upgradeDefenseButton = GetNode<Button>("UI/UpgradePanel/DefenseButton");
 		upgradeHpButton = GetNode<Button>("UI/UpgradePanel/HpButton");
+
 		tilePointsNode = GetNode<Node2D>("TilePoints");
-		tileLevelLabelsNode = GetNode<Node2D>("TileLevelLabels");
 
 		rollButton.Pressed += OnRollButtonPressed;
 		redDice.Selected += OnDiceSelected;
 		blueDice.Selected += OnDiceSelected;
+
 		upgradeAttackButton.Pressed += OnUpgradeAttackPressed;
 		upgradeDefenseButton.Pressed += OnUpgradeDefensePressed;
 		upgradeHpButton.Pressed += OnUpgradeHpPressed;
@@ -83,15 +89,21 @@ public partial class Map : Node2D
 			GetNode<Node2D>("Entities"),
 			GetNode<Marker2D>("Entities/BossSpawnPoint")
 		);
+
 		CreateMap();
 
-		bool loadedSave = SaveManager.Instance.TryLoadRequestedGame(allTiles, out BossSaveData savedBoss);
+		bool loadedSave = SaveManager.Instance.TryLoadRequestedGame(
+			allTiles,
+			out BossSaveData savedBoss
+		);
+
 		if (!loadedSave)
 			GameState.Instance.ResetToDefaults();
 
-		CreateTileLevelLabels();
+		CreateTileSystem();
 
 		player.SnapToTile(GameState.Instance.PlayerPosition);
+
 		UpdatePlayerHealthDisplay();
 		UpdatePlayerStatsDisplay();
 
@@ -109,52 +121,25 @@ public partial class Map : Node2D
 	private void CreateMap()
 	{
 		allTiles.Clear();
+
 		foreach (MapTileData.TileColor color in TileColors)
 			allTiles.Add(CreateTile(color));
 	}
 
-	private void CreateTileLevelLabels()
+	private void CreateTileSystem()
 	{
-		foreach (Node child in tileLevelLabelsNode.GetChildren())
-			child.QueueFree();
-
-		tileLevelLabels.Clear();
-
-		for (int i = 0; i < allTiles.Count; i++)
+		tileSystem = new TileSystem
 		{
-			Marker2D marker = tilePointsNode.GetNode<Marker2D>($"Marker2D{i}");
-			Label label = new()
-			{
-				Name = $"TileLevel{i}",
-				Text = allTiles[i].Level.ToString(),
-				Position = marker.Position + new Vector2(-22, 62),
-				Size = new Vector2(44, 36),
-				HorizontalAlignment = HorizontalAlignment.Center,
-				VerticalAlignment = VerticalAlignment.Center,
-				MouseFilter = Control.MouseFilterEnum.Ignore,
-				ZIndex = 20
-			};
+			Name = "TileSystem"
+		};
 
-			label.AddThemeFontSizeOverride("font_size", 24);
-			label.AddThemeColorOverride("font_color", Colors.White);
-			label.AddThemeColorOverride("font_outline_color", Colors.Black);
-			label.AddThemeConstantOverride("outline_size", 6);
-
-			tileLevelLabelsNode.AddChild(label);
-			tileLevelLabels.Add(label);
-		}
+		AddChild(tileSystem);
+		tileSystem.Initialize(allTiles, tilePointsNode, rollButton);
 	}
 
-	private void UpdateTileLevelLabel(int tileIndex)
-	{
-		if (tileIndex < 0 || tileIndex >= tileLevelLabels.Count)
-			return;
-
-		tileLevelLabels[tileIndex].Text = allTiles[tileIndex].Level.ToString();
-	}
-
-
-	private static MapTileData CreateTile(MapTileData.TileColor tileColor)
+	private static MapTileData CreateTile(
+		MapTileData.TileColor tileColor
+	)
 	{
 		MapTileData tile = new()
 		{
@@ -162,7 +147,9 @@ public partial class Map : Node2D
 			Color = tileColor
 		};
 
-		tile.Value = tileColor == MapTileData.TileColor.White ? 0 : 1;
+		tile.Value =
+			tileColor == MapTileData.TileColor.White ? 0 : 1;
+
 		return tile;
 	}
 
@@ -183,34 +170,48 @@ public partial class Map : Node2D
 
 	public async Task<bool> HandleDiceSelected(string color)
 	{
-		if (GameState.Instance.CurrentTurnState != GameState.TurnState.WaitingForDiceSelection)
+		if (
+			GameState.Instance.CurrentTurnState
+			!= GameState.TurnState.WaitingForDiceSelection
+		)
 			return false;
 
 		if (!SelectDiceColor(color))
 			return false;
 
 		int steps = GameState.Instance.Dice[color];
+
 		ApplySelectedDiceBonus(color, steps);
 		UpdatePlayerStatsDisplay();
 
 		SetTurnState(GameState.TurnState.Moving);
+
 		await player.MoveBySteps(steps);
 
 		SetTurnState(GameState.TurnState.ResolvingTile);
+
 		ResolveTileEffect();
+
 		UpdatePlayerHealthDisplay();
 		UpdatePlayerStatsDisplay();
 
 		SetTurnState(GameState.TurnState.Battling);
-		BattleSystem.BattleOutcome outcome = await battleSystem.ResolveTurn();
+
+		BattleSystem.BattleOutcome outcome =
+			await battleSystem.ResolveTurn();
+
 		UpdatePlayerHealthDisplay();
 		UpdateBossStatsDisplay();
+
 		FinishTurn(outcome);
 
 		return true;
 	}
 
-	private static void ApplySelectedDiceBonus(string color, int value)
+	private static void ApplySelectedDiceBonus(
+		string color,
+		int value
+	)
 	{
 		if (color == "red")
 			GameState.Instance.TempAtk += value;
@@ -220,81 +221,9 @@ public partial class Map : Node2D
 
 	public void ResolveTileEffect()
 	{
-		int tileIndex = GameState.Instance.PlayerPosition;
-		MapTileData tile = allTiles[tileIndex];
-
-		// 空白格：第一次踩中只激活，不给收益。
-		// 第二次开始先按当前等级结算回血/护盾，再把地块升级到下一等级。
-		if (tile.Color == MapTileData.TileColor.White)
-		{
-			if (tile.Level == 0)
-			{
-				tile.Level = 1;
-				tile.Value = 1;
-				UpdateTileLevelLabel(tileIndex);
-				GD.Print("首次踩中空白格：地块已激活为 1 级，本次不获得回血或护盾");
-				return;
-			}
-
-			ResolveWhiteTileEffect(tile);
-
-			if (tile.Level < MapTileData.MaxUpgrade)
-			{
-				tile.Level += 1;
-				tile.Value = tile.Level;
-			}
-
-			UpdateTileLevelLabel(tileIndex);
-			return;
-		}
-
-		if (tile.Color == MapTileData.TileColor.Red && GameState.Instance.DiceColor == "red")
-			GameState.Instance.TempAtk += tile.Value;
-		else if (tile.Color == MapTileData.TileColor.Blue && GameState.Instance.DiceColor == "blue")
-			GameState.Instance.TempDef += tile.Value;
-
-		// 其他颜色仍按原规则：玩家效果结算后，地块自身始终成长。
-		if (tile.Level >= MapTileData.MaxUpgrade)
-			return;
-
-		tile.Level += 1;
-
-		switch (tile.Color)
-		{
-			case MapTileData.TileColor.Red:
-			case MapTileData.TileColor.Blue:
-				tile.Value += 1;
-				break;
-			case MapTileData.TileColor.Black:
-				tile.Value -= 1;
-				break;
-		}
-
-		UpdateTileLevelLabel(tileIndex);
+		// 地块结算已移入 TileSystem，避免 Map.cs 与队友战斗改动冲突。
+		tileSystem.ResolveLandedTile();
 	}
-
-	private static void ResolveWhiteTileEffect(MapTileData tile)
-	{
-		if (GameState.Instance.PlayerHp < GameState.Instance.PlayerMaxHp)
-		{
-			int missingHp = GameState.Instance.PlayerMaxHp - GameState.Instance.PlayerHp;
-			int actualHeal = Mathf.Min(tile.Value, missingHp);
-			GameState.Instance.PlayerHp += actualHeal;
-			GD.Print($"踩中空白格：回复 {actualHeal} 点生命（地块当前回血值 {tile.Value}）");
-			return;
-		}
-
-		if (GameState.Instance.PlayerShield < GameState.MaxShield)
-		{
-			int shieldGain = Mathf.Min(tile.Value, GameState.MaxShield - GameState.Instance.PlayerShield);
-			GameState.Instance.PlayerShield += shieldGain;
-			GD.Print($"满血踩中空白格：获得 {shieldGain} 点护盾（地块等级 {tile.Level}），当前护盾 {GameState.Instance.PlayerShield}/{GameState.MaxShield}");
-			return;
-		}
-
-		GD.Print("满血且护盾已满：空白格本次对玩家无效果");
-	}
-
 
 	private void SpawnNextBoss()
 	{
@@ -302,6 +231,7 @@ public partial class Map : Node2D
 			goblin.HpChanged -= OnBossHpChanged;
 
 		goblin = bossRushSystem.SpawnNextBoss();
+
 		if (goblin == null)
 		{
 			SetTurnState(GameState.TurnState.GameOver);
@@ -309,27 +239,42 @@ public partial class Map : Node2D
 		}
 
 		goblin.HpChanged += OnBossHpChanged;
+
 		battleSystem.Setup(player, goblin);
+
 		UpdateBossStatsDisplay();
 	}
 
 	private void RestoreBoss(BossSaveData savedBoss)
 	{
-		goblin = bossRushSystem.RestoreBoss(savedBoss.Index, savedBoss.CurrentHp);
+		goblin = bossRushSystem.RestoreBoss(
+			savedBoss.Index,
+			savedBoss.CurrentHp
+		);
+
 		if (goblin == null)
 		{
-			GD.PrintErr("Boss 读档失败，无法恢复当前 Boss");
+			GD.PrintErr(
+				"Boss 读档失败，无法恢复当前 Boss"
+			);
+
 			return;
 		}
 
 		goblin.HpChanged += OnBossHpChanged;
+
 		battleSystem.Setup(player, goblin);
+
 		UpdateBossStatsDisplay();
 	}
 
 	public bool SaveCurrentGame()
 	{
-		if (goblin == null || !IsInstanceValid(goblin) || goblin.CurrentHp <= 0)
+		if (
+			goblin == null
+			|| !IsInstanceValid(goblin)
+			|| goblin.CurrentHp <= 0
+		)
 			return false;
 
 		return SaveManager.Instance.SaveGame(
@@ -341,7 +286,10 @@ public partial class Map : Node2D
 
 	public bool SaveIfStable()
 	{
-		if (GameState.Instance.CurrentTurnState != GameState.TurnState.ReadyToRoll)
+		if (
+			GameState.Instance.CurrentTurnState
+			!= GameState.TurnState.ReadyToRoll
+		)
 			return false;
 
 		return SaveCurrentGame();
@@ -349,8 +297,14 @@ public partial class Map : Node2D
 
 	private void UpdatePlayerStatsDisplay()
 	{
-		int totalAtk = GameState.Instance.PlayerAtk + GameState.Instance.TempAtk;
-		int totalDef = GameState.Instance.PlayerDef + GameState.Instance.TempDef;
+		int totalAtk =
+			GameState.Instance.PlayerAtk
+			+ GameState.Instance.TempAtk;
+
+		int totalDef =
+			GameState.Instance.PlayerDef
+			+ GameState.Instance.TempDef;
+
 		playerStatsLabel.Text =
 			$"玩家属性\n" +
 			$"攻击 = {totalAtk}\n" +
@@ -360,7 +314,10 @@ public partial class Map : Node2D
 
 	private void UpdateBossStatsDisplay()
 	{
-		if (goblin == null || !IsInstanceValid(goblin))
+		if (
+			goblin == null
+			|| !IsInstanceValid(goblin)
+		)
 		{
 			bossStatsLabel.Text = "Boss 已全部击败";
 			return;
@@ -374,131 +331,252 @@ public partial class Map : Node2D
 			$"防御 = {goblin.Def}";
 	}
 
-	private void OnBossHpChanged(int currentHp, int maxHp)
+	private void OnBossHpChanged(
+		int currentHp,
+		int maxHp
+	)
 	{
 		UpdateBossStatsDisplay();
 	}
 
 	private void UpdatePlayerHealthDisplay()
 	{
-		playerHpBar.MaxValue = GameState.Instance.PlayerMaxHp;
-		playerHpBar.Value = GameState.Instance.PlayerHp;
-		playerHpLabel.Text = $"玩家 HP  {GameState.Instance.PlayerHp} / {GameState.Instance.PlayerMaxHp}";
+		playerHpBar.MaxValue =
+			GameState.Instance.PlayerMaxHp;
+
+		playerHpBar.Value =
+			GameState.Instance.PlayerHp;
+
+		playerHpLabel.Text =
+			$"玩家 HP  {GameState.Instance.PlayerHp} / {GameState.Instance.PlayerMaxHp}";
 	}
 
-	private void FinishTurn(BattleSystem.BattleOutcome outcome)
+	private void FinishTurn(
+		BattleSystem.BattleOutcome outcome
+	)
 	{
 		GameState.Instance.ResetTempStats();
+
 		UpdatePlayerStatsDisplay();
 
 		switch (outcome)
 		{
 			case BattleSystem.BattleOutcome.EnemyDefeated:
+
 				if (bossRushSystem.HasNextBoss)
 				{
-					SetTurnState(GameState.TurnState.Upgrading);
+					SetTurnState(
+						GameState.TurnState.Upgrading
+					);
+
 					ShowUpgradePanel();
 				}
 				else
 				{
 					EnterVictoryScene();
 				}
+
 				break;
+
 			case BattleSystem.BattleOutcome.PlayerDefeated:
+
 				EnterDefeatScene();
+
 				break;
+
 			default:
-				SetTurnState(GameState.TurnState.ReadyToRoll);
+
+				SetTurnState(
+					GameState.TurnState.ReadyToRoll
+				);
+
 				SaveCurrentGame();
+
 				break;
 		}
 	}
 
 	private void ShowUpgradePanel()
 	{
-		upgradeTitleLabel.Text = $"击败 {goblin.DisplayName}！选择一项升级";
+		upgradeTitleLabel.Text =
+			$"击败 {goblin.DisplayName}！选择一项升级";
+
 		upgradeCurrentStatsLabel.Text =
 			$"当前：HP {GameState.Instance.PlayerHp}/{GameState.Instance.PlayerMaxHp}    " +
-			$"攻击 {GameState.Instance.PlayerAtk}    防御 {GameState.Instance.PlayerDef}    " +
+			$"攻击 {GameState.Instance.PlayerAtk}    " +
+			$"防御 {GameState.Instance.PlayerDef}    " +
 			$"护盾 {GameState.Instance.PlayerShield}/{GameState.MaxShield}";
 
-		upgradeAttackButton.Text = $"攻击 +{AttackUpgradeAmount}";
-		upgradeDefenseButton.Text = $"防御 +{DefenseUpgradeAmount}";
-		upgradeHpButton.Text = $"最大生命 +{HpUpgradeAmount}";
+		upgradeAttackButton.Text =
+			$"攻击 +{AttackUpgradeAmount}";
+
+		upgradeDefenseButton.Text =
+			$"防御 +{DefenseUpgradeAmount}";
+
+		upgradeHpButton.Text =
+			$"最大生命 +{HpUpgradeAmount}";
+
 		upgradePanel.Visible = true;
 	}
 
-	private void ApplyUpgrade(string choice, int amount)
+	private void ApplyUpgrade(
+		string choice,
+		int amount
+	)
 	{
-		if (GameState.Instance.CurrentTurnState != GameState.TurnState.Upgrading)
+		if (
+			GameState.Instance.CurrentTurnState
+			!= GameState.TurnState.Upgrading
+		)
 			return;
 
 		if (!player.Upgrade(choice, amount))
 			return;
 
 		upgradePanel.Visible = false;
+
 		UpdatePlayerHealthDisplay();
 		UpdatePlayerStatsDisplay();
 
 		if (bossRushSystem.HasNextBoss)
 		{
 			SpawnNextBoss();
-			SetTurnState(GameState.TurnState.ReadyToRoll);
+
+			SetTurnState(
+				GameState.TurnState.ReadyToRoll
+			);
+
 			SaveCurrentGame();
 		}
 		else
 		{
-			// 正常流程中最后一只 Boss 不会再进入升级界面，
-			// 这里保留为兜底入口。
 			EnterVictoryScene();
 		}
 	}
 
-	// 对外保留明确的胜利入口，后续剧情、事件或调试也可以直接调用。
 	public void EnterVictoryScene()
 	{
-		SetTurnState(GameState.TurnState.GameOver);
-		GD.Print("所有 Boss 已全部击败，进入通关场景");
-		GetTree().ChangeSceneToFile("res://Scenes/Victory.tscn");
+		SetTurnState(
+			GameState.TurnState.GameOver
+		);
+
+		GD.Print(
+			"所有 Boss 已全部击败，进入通关场景"
+		);
+
+		GetTree().ChangeSceneToFile(
+			"res://Scenes/Victory.tscn"
+		);
 	}
 
-	// 对外保留明确的失败入口。
 	public void EnterDefeatScene()
 	{
-		SetTurnState(GameState.TurnState.GameOver);
-		GD.Print("玩家被击败，进入失败场景");
-		GetTree().ChangeSceneToFile("res://Scenes/GameOver.tscn");
+		SetTurnState(
+			GameState.TurnState.GameOver
+		);
+
+		GD.Print(
+			"玩家被击败，进入失败场景"
+		);
+
+		GetTree().ChangeSceneToFile(
+			"res://Scenes/GameOver.tscn"
+		);
 	}
 
-	private void OnUpgradeAttackPressed() => ApplyUpgrade("atk", AttackUpgradeAmount);
-	private void OnUpgradeDefensePressed() => ApplyUpgrade("def", DefenseUpgradeAmount);
-	private void OnUpgradeHpPressed() => ApplyUpgrade("hp", HpUpgradeAmount);
-
-	public void SetTurnState(GameState.TurnState newState)
+	private void OnUpgradeAttackPressed()
 	{
-		GameState.Instance.CurrentTurnState = newState;
-		rollButton.Disabled = newState != GameState.TurnState.ReadyToRoll;
+		ApplyUpgrade(
+			"atk",
+			AttackUpgradeAmount
+		);
 	}
 
-	private async void OnDiceSelected(string color)
+	private void OnUpgradeDefensePressed()
+	{
+		ApplyUpgrade(
+			"def",
+			DefenseUpgradeAmount
+		);
+	}
+
+	private void OnUpgradeHpPressed()
+	{
+		ApplyUpgrade(
+			"hp",
+			HpUpgradeAmount
+		);
+	}
+
+	public void SetTurnState(
+		GameState.TurnState newState
+	)
+	{
+		GameState.Instance.CurrentTurnState =
+			newState;
+
+		rollButton.Disabled =
+			newState != GameState.TurnState.ReadyToRoll;
+
+		tileSystem?.OnTurnStateChanged(newState);
+	}
+
+	private async void OnDiceSelected(
+		string color
+	)
 	{
 		await HandleDiceSelected(color);
 	}
 
 	private async void OnRollButtonPressed()
 	{
-		if (GameState.Instance.CurrentTurnState != GameState.TurnState.ReadyToRoll)
+		if (
+			GameState.Instance.CurrentTurnState
+			!= GameState.TurnState.ReadyToRoll
+		)
 			return;
 
-		SetTurnState(GameState.TurnState.Rolling);
+		SetTurnState(
+			GameState.TurnState.Rolling
+		);
+
+		// 幸运"免费行动"：若积攒了免费行动，本回合战斗怪物不反击
+		if (GameState.Instance.FreeActionsPending > 0)
+		{
+			GameState.Instance.FreeActionsPending -= 1;
+			GameState.Instance.NoCounterThisBattle = true;
+			GD.Print("幸运：本次行动怪物不反击");
+		}
+
 		GameState.Instance.ResetTempStats();
+  
 		UpdatePlayerStatsDisplay();
+
+		// 生成两个骰子的结果
 		RollDice();
 
-		Task redAnimation = redDice.PlayRollAnimation(GameState.Instance.Dice["red"]);
-		Task blueAnimation = blueDice.PlayRollAnimation(GameState.Instance.Dice["blue"]);
-		await Task.WhenAll(redAnimation, blueAnimation);
+		// 播放摇骰子音效
+		diceRollSound.Play();
 
-		SetTurnState(GameState.TurnState.WaitingForDiceSelection);
+		// 红蓝骰子同时播放摇骰子动画
+		Task redAnimation =
+			redDice.PlayRollAnimation(
+				GameState.Instance.Dice["red"]
+			);
+
+		Task blueAnimation =
+			blueDice.PlayRollAnimation(
+				GameState.Instance.Dice["blue"]
+			);
+
+		// 等待两个骰子动画全部结束
+		await Task.WhenAll(
+			redAnimation,
+			blueAnimation
+		);
+
+		SetTurnState(
+			GameState.TurnState.WaitingForDiceSelection
+		);
 	}
 }

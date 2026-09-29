@@ -7,24 +7,30 @@ public partial class MainMenu : Control
 	private TextureButton settingsButton;
 	private TextureButton quitButton;
 
+	private AudioStreamPlayer buttonSound;
+
 	public override void _Ready()
 	{
 		continueButton = GetNode<TextureButton>(
-            "VBoxContainer/ContinueButton"
+			"VBoxContainer/ContinueButton"
 		);
 
 		newGameButton = GetNode<TextureButton>(
-            "VBoxContainer/NewGameButton"
+			"VBoxContainer/NewGameButton"
 		);
 
 		settingsButton = GetNode<TextureButton>(
-            "VBoxContainer/SettingsButton"
+			"VBoxContainer/SettingsButton"
 		);
 
 		quitButton = GetNode<TextureButton>(
-            "VBoxContainer/QuitButton"
+			"VBoxContainer/QuitButton"
 		);
 
+		// 获取按钮音效节点
+		buttonSound = GetNode<AudioStreamPlayer>("ButtonSound");
+
+		// 有存档才显示继续游戏
 		continueButton.Visible = SaveManager.Instance.HasSave();
 
 		// 按下 / 松开
@@ -49,12 +55,17 @@ public partial class MainMenu : Control
 
 	private void ButtonDownEffect(TextureButton button)
 	{
+		// 播放按钮音效
+		buttonSound.Play();
+
+		// 按下效果
 		button.Position += new Vector2(0, 3);
 		button.Scale = new Vector2(0.97f, 0.97f);
 	}
 
 	private void ButtonUpEffect(TextureButton button)
 	{
+		// 松开效果
 		button.Position -= new Vector2(0, 3);
 		button.Scale = new Vector2(1.0f, 1.0f);
 	}

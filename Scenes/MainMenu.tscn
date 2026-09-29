@@ -6,6 +6,8 @@
 [ext_resource type="Texture2D" uid="uid://78otlnuypc6m" path="res://Image/Button/GameStartButton.png" id="4_xim88"]
 [ext_resource type="Texture2D" uid="uid://chnjm8a2r5ytl" path="res://Image/Button/SettingsButton.png" id="5_koqhg"]
 [ext_resource type="Texture2D" uid="uid://bpjjpvg8efwrh" path="res://Image/Button/QuitButton.png" id="6_cmrfp"]
+[ext_resource type="AudioStream" uid="uid://xd4d3qq8wam0" path="res://Audio/BGM/MainMenu.mp3" id="7_xim88"]
+[ext_resource type="AudioStream" uid="uid://cq7ugx5hq5u4f" path="res://Audio/SFX/UI/Button3.wav" id="8_koqhg"]
 
 [node name="MainMenu" type="Control" unique_id=1501592089]
 layout_mode = 3
@@ -61,3 +63,11 @@ layout_mode = 2
 texture_normal = ExtResource("6_cmrfp")
 ignore_texture_size = true
 stretch_mode = 5
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1084442515]
+stream = ExtResource("7_xim88")
+autoplay = true
+parameters/looping = true
+
+[node name="ButtonSound" type="AudioStreamPlayer" parent="." unique_id=942455386]
+stream = ExtResource("8_koqhg")

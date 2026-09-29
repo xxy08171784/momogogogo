@@ -9,7 +9,8 @@
 [ext_resource type="PackedScene" uid="uid://cpp8oxgsxh7n7" path="res://Scenes/Map/map.tscn" id="5_map"]
 [ext_resource type="Texture2D" uid="uid://cpe3kqvvbxa4w" path="res://Image/Button/Back.png" id="6_dahhg"]
 [ext_resource type="Texture2D" uid="uid://yd73bbaerowr" path="res://Image/Button/BackGame.png" id="9_3so38"]
-[ext_resource type="AudioStream" uid="uid://qb8lncc557yi" path="res://Music/GameBgm.mp3" id="10_71axn"]
+[ext_resource type="AudioStream" uid="uid://qb8lncc557yi" path="res://Audio/BGM/GameBgm.mp3" id="10_71axn"]
+[ext_resource type="AudioStream" uid="uid://cq7ugx5hq5u4f" path="res://Audio/SFX/UI/Button3.wav" id="10_dahhg"]
 
 [node name="Game" type="Node2D" unique_id=1626613144]
 script = ExtResource("1_gl6un")
@@ -134,6 +135,9 @@ offset_bottom = 912.0
 texture_normal = ExtResource("9_3so38")
 ignore_texture_size = true
 stretch_mode = 5
+
+[node name="ButtonSound" type="AudioStreamPlayer" parent="PauseMenu" unique_id=2105143410]
+stream = ExtResource("10_dahhg")
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=998198230]
 stream = ExtResource("10_71axn")

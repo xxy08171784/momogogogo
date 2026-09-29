@@ -101,7 +101,9 @@ public partial class SaveManager : Node
 				{
 					Color = (int)tile.Color,
 					Level = tile.Level,
-					Value = tile.Value
+					Value = tile.Value,
+					HitCount = tile.HitCount,
+					UpgradeChoice = (int)tile.UpgradeChoice
 				});
 			}
 
@@ -176,6 +178,12 @@ public partial class SaveManager : Node
 		state.PlayerShield = Math.Clamp(data.Player.Shield, 0, GameState.MaxShield);
 		state.TempAtk = 0;
 		state.TempDef = 0;
+		state.FlatDamageBonus = 0;
+		state.SkipPlayerAttack = false;
+		state.AttackMultiplier = 1f;
+		state.ChargeActive = false;
+		state.FreeActionsPending = 0;
+		state.NoCounterThisBattle = false;
 		state.PlayerPosition = PosMod(data.Player.Position, GameState.TileCount);
 		state.DiceColor = data.Dice.SelectedColor == "blue" ? "blue" : "red";
 		state.Dice["red"] = data.Dice.RedValue;
@@ -190,6 +198,11 @@ public partial class SaveManager : Node
 
 			tiles[i].Level = Math.Clamp(savedTile.Level, 0, MapTileData.MaxUpgrade);
 			tiles[i].Value = savedTile.Value;
+			tiles[i].HitCount = Math.Clamp(savedTile.HitCount, 0, MapTileData.UpgradeThreshold);
+			tiles[i].UpgradeChoice =
+				Enum.IsDefined(typeof(MapTileData.TileUpgrade), savedTile.UpgradeChoice)
+					? (MapTileData.TileUpgrade)savedTile.UpgradeChoice
+					: MapTileData.TileUpgrade.None;
 		}
 	}
 

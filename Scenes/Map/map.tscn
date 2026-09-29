@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://djccmeu3jff7w" path="res://Scenes/Entities/Player.tscn" id="4_anho1"]
 [ext_resource type="Script" uid="uid://bgefu2vb0fov" path="res://Scripts/Battle/BattleSystem.cs" id="6_battle"]
 [ext_resource type="Script" uid="uid://dm6nuwuex1pep" path="res://Scripts/Battle/BossRushSystem.cs" id="7_bossrush"]
+[ext_resource type="AudioStream" uid="uid://ct7oractfak3o" path="res://Audio/SFX/UI/Dice.mp3" id="7_eu35m"]
 
 [node name="Map" type="Node2D" unique_id=856293437]
 script = ExtResource("1_xtf6f")
@@ -211,3 +212,6 @@ position = Vector2(605, 680)
 
 [node name="Marker2D11" type="Marker2D" parent="TilePoints" unique_id=258083105]
 position = Vector2(605, 471)
+
+[node name="DiceRollSound" type="AudioStreamPlayer" parent="." unique_id=1660441443]
+stream = ExtResource("7_eu35m")

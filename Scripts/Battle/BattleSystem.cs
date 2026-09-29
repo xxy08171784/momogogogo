@@ -38,6 +38,20 @@ public partial class BattleSystem : Node
 			return BattleOutcome.EnemyDefeated;
 		}
 
+		// ========================================================
+		// 地块系统握手：幸运"免费行动" —— 本回合怪物不反击。
+		// 若队友重写 ResolveTurn，请保留这段：读取并清除 NoCounterThisBattle。
+		// ========================================================
+		bool freeAction = GameState.Instance.NoCounterThisBattle;
+		GameState.Instance.NoCounterThisBattle = false;
+
+		if (freeAction)
+		{
+			GD.Print("幸运免费行动：怪物本回合不反击");
+			GD.Print($"回合战斗结束：玩家 HP={GameState.Instance.PlayerHp}，{enemy.DisplayName} HP={enemy.CurrentHp}");
+			return BattleOutcome.Continue;
+		}
+
 		int damageToPlayer = Mathf.Max(enemy.Atk - playerDefense, 0);
 		GD.Print($"{enemy.DisplayName} 反击：ATK {enemy.Atk} - 玩家 DEF {playerDefense} = {damageToPlayer} 伤害");
 

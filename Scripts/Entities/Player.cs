@@ -1,3 +1,4 @@
+
 using Godot;
 using System.Threading.Tasks;
 
@@ -5,6 +6,18 @@ public partial class Player : CharacterBody2D
 {
 	private Node2D tilePoints;
 	private AnimatedSprite2D animatedSprite;
+
+	// =========================
+	// 音效
+	// =========================
+
+	private AudioStreamPlayer walkSound;
+	private AudioStreamPlayer attackSound;
+	private AudioStreamPlayer hitSound;
+	private AudioStreamPlayer defendSound;
+	private AudioStreamPlayer healSound;
+	private AudioStreamPlayer upgradeSound;
+
 
 	// =========================
 	// 角色方向
@@ -36,6 +49,7 @@ public partial class Player : CharacterBody2D
 			return;
 		}
 
+
 		// 获取角色动画
 		animatedSprite =
 			GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
@@ -49,13 +63,93 @@ public partial class Player : CharacterBody2D
 			return;
 		}
 
+
+		// =========================
+		// 获取音效节点
+		// =========================
+
+		walkSound =
+			GetNodeOrNull<AudioStreamPlayer>("WalkSound");
+
+		attackSound =
+			GetNodeOrNull<AudioStreamPlayer>("AttackSound");
+
+		hitSound =
+			GetNodeOrNull<AudioStreamPlayer>("HitSound");
+
+		defendSound =
+			GetNodeOrNull<AudioStreamPlayer>("DefendSound");
+
+		healSound =
+			GetNodeOrNull<AudioStreamPlayer>("HealSound");
+
+		upgradeSound =
+			GetNodeOrNull<AudioStreamPlayer>("UpgradeSound");
+
+
+		// =========================
 		// 恢复玩家位置
+		// =========================
+
 		SnapToTile(
 			GameState.Instance.PlayerPosition
 		);
 
+
 		// 游戏开始播放待机动画
 		PlayIdleAnimation();
+	}
+
+
+	// =========================================================
+	// 音效
+	// =========================================================
+
+	// 走路音效
+	public void PlayWalkSound()
+	{
+		if (walkSound != null)
+			walkSound.Play();
+	}
+
+
+	// 攻击音效
+	public void PlayAttackSound()
+	{
+		if (attackSound != null)
+			attackSound.Play();
+	}
+
+
+	// 受击音效
+	public void PlayHitSound()
+	{
+		if (hitSound != null)
+			hitSound.Play();
+	}
+
+
+	// 防御音效
+	public void PlayDefendSound()
+	{
+		if (defendSound != null)
+			defendSound.Play();
+	}
+
+
+	// 回血音效
+	public void PlayHealSound()
+	{
+		if (healSound != null)
+			healSound.Play();
+	}
+
+
+	// 升级音效
+	public void PlayUpgradeSound()
+	{
+		if (upgradeSound != null)
+			upgradeSound.Play();
 	}
 
 
@@ -70,13 +164,19 @@ public partial class Player : CharacterBody2D
 
 		if (animatedSprite.SpriteFrames == null)
 		{
-			GD.PrintErr("Player：AnimatedSprite2D 没有 SpriteFrames！");
+			GD.PrintErr(
+				"Player：AnimatedSprite2D 没有 SpriteFrames！"
+			);
+
 			return;
 		}
 
 		if (!animatedSprite.SpriteFrames.HasAnimation("idle"))
 		{
-			GD.PrintErr("Player：找不到 idle 动画！");
+			GD.PrintErr(
+				"Player：找不到 idle 动画！"
+			);
+
 			return;
 		}
 
@@ -151,7 +251,10 @@ public partial class Player : CharacterBody2D
 
 		if (animatedSprite.SpriteFrames == null)
 		{
-			GD.PrintErr("Player：没有 SpriteFrames！");
+			GD.PrintErr(
+				"Player：没有 SpriteFrames！"
+			);
+
 			return;
 		}
 
@@ -177,7 +280,10 @@ public partial class Player : CharacterBody2D
 	{
 		if (tilePoints == null)
 		{
-			GD.PrintErr("Player：TilePoints 没有初始化！");
+			GD.PrintErr(
+				"Player：TilePoints 没有初始化！"
+			);
+
 			return;
 		}
 
@@ -242,6 +348,10 @@ public partial class Player : CharacterBody2D
 			return;
 		}
 
+		// 播放攻击音效
+		PlayAttackSound();
+
+		// 播放攻击动画
 		animatedSprite.Play("attack");
 
 		// 等待攻击动画播放完成
@@ -288,6 +398,10 @@ public partial class Player : CharacterBody2D
 			return;
 		}
 
+		// 播放受击音效
+		PlayHitSound();
+
+		// 播放受击动画
 		animatedSprite.Play("hit");
 
 		// 等待受击动画
@@ -414,6 +528,9 @@ public partial class Player : CharacterBody2D
 			// 播放对应方向的行走动画
 			PlayWalkAnimation();
 
+			// 播放走路音效
+			PlayWalkSound();
+
 			// 移动到下一格
 			Tween tween =
 				CreateTween();
@@ -486,6 +603,9 @@ public partial class Player : CharacterBody2D
 
 		GameState.Instance.PlayerLevel += 1;
 
+		// 播放升级音效
+		PlayUpgradeSound();
+
 		return true;
 	}
 
@@ -511,6 +631,9 @@ public partial class Player : CharacterBody2D
 						GameState.Instance.PlayerMaxHp
 					);
 
+				// 播放回血音效
+				PlayHealSound();
+
 				break;
 
 
@@ -526,6 +649,9 @@ public partial class Player : CharacterBody2D
 
 				GameState.Instance.PlayerDef +=
 					amount;
+
+				// 播放防御音效
+				PlayDefendSound();
 
 				break;
 

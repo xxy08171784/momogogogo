@@ -5,10 +5,14 @@ public partial class Settings : Control
 {
 	private TextureButton backButton;
 	private HSlider volumeSlider;
+	private AudioStreamPlayer buttonSound;
 
 	public override void _Ready()
 	{
 		backButton = GetNode<TextureButton>("BackButton");
+
+		// 获取按钮音效
+		buttonSound = GetNode<AudioStreamPlayer>("ButtonSound");
 
 		// 按下 / 松开效果
 		backButton.ButtonDown += () => ButtonDownEffect(backButton);
@@ -33,6 +37,10 @@ public partial class Settings : Control
 	// 按下按钮
 	private void ButtonDownEffect(TextureButton button)
 	{
+		// 播放按钮音效
+		buttonSound.Play();
+
+		// 按下视觉效果
 		button.Position += new Vector2(0, 3);
 		button.Scale = new Vector2(0.97f, 0.97f);
 	}
@@ -40,6 +48,7 @@ public partial class Settings : Control
 	// 松开按钮
 	private void ButtonUpEffect(TextureButton button)
 	{
+		// 恢复视觉效果
 		button.Position -= new Vector2(0, 3);
 		button.Scale = new Vector2(1.0f, 1.0f);
 	}
@@ -55,6 +64,7 @@ public partial class Settings : Control
 
 		// 0~1 转成 dB
 		float db = Mathf.LinearToDb(volume);
+
 
 		int busIndex = AudioServer.GetBusIndex("Master");
 

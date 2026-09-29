@@ -42,4 +42,7 @@ public sealed class TileSaveData
 	public int Color { get; set; }
 	public int Level { get; set; }
 	public int Value { get; set; }
+	// 新增（旧存档缺省为 0/None，自动兼容）
+	public int HitCount { get; set; }
+	public int UpgradeChoice { get; set; }
 }
