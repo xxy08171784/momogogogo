@@ -419,22 +419,34 @@ public partial class Player : CharacterBody2D
 	// 受到伤害
 	// =========================
 
-	public int TakeDamage(int damage, out int absorbedByShield)
+	public int TakeDamage(int damage, out int totalAbsorbed)
 	{
 		int safeDamage =
 			Mathf.Max(damage, 0);
 
-		absorbedByShield =
+		int absorbedByTurnShield =
+			Mathf.Min(
+				GameState.Instance.PlayerTurnShield,
+				safeDamage
+			);
+
+		GameState.Instance.PlayerTurnShield -=
+			absorbedByTurnShield;
+
+		int remainingAfterTurnShield =
+			safeDamage - absorbedByTurnShield;
+
+		int absorbedByShield =
 			Mathf.Min(
 				GameState.Instance.PlayerShield,
-				safeDamage
+				remainingAfterTurnShield
 			);
 
 		GameState.Instance.PlayerShield -=
 			absorbedByShield;
 
 		int remainingDamage =
-			safeDamage - absorbedByShield;
+			remainingAfterTurnShield - absorbedByShield;
 
 		int previousHp =
 			GameState.Instance.PlayerHp;
@@ -445,15 +457,28 @@ public partial class Player : CharacterBody2D
 				0
 			);
 
-		if (absorbedByShield > 0)
+		totalAbsorbed = absorbedByTurnShield + absorbedByShield;
+		if (totalAbsorbed > 0)
 		{
 			GD.Print(
-				$"护盾抵消 {absorbedByShield} 点伤害，剩余护盾 {GameState.Instance.PlayerShield}/{GameState.MaxShield}"
+				$"护盾抵消 {totalAbsorbed} 点伤害，剩余总护盾 {GameState.Instance.TotalPlayerShield}"
 			);
 		}
 
 		return previousHp -
 			   GameState.Instance.PlayerHp;
+	}
+
+	// 真实伤害：直接扣生命，不经过防御和护盾。
+	public int TakeTrueDamage(int damage)
+	{
+		int safeDamage = Mathf.Max(damage, 0);
+		int previousHp = GameState.Instance.PlayerHp;
+
+		GameState.Instance.PlayerHp =
+			Mathf.Max(previousHp - safeDamage, 0);
+
+		return previousHp - GameState.Instance.PlayerHp;
 	}
 
 
@@ -539,12 +564,17 @@ public partial class Player : CharacterBody2D
 				this,
 				"global_position",
 				targetNode.GlobalPosition,
-				0.2
+				0.5
 			);
 
 			await ToSignal(
 				tween,
 				Tween.SignalName.Finished
+			);
+
+			await ToSignal(
+				GetTree().CreateTimer(0.2),
+				SceneTreeTimer.SignalName.Timeout
 			);
 		}
 
@@ -625,11 +655,7 @@ public partial class Player : CharacterBody2D
 				GameState.Instance.PlayerMaxHp +=
 					amount;
 
-				GameState.Instance.PlayerHp =
-					Mathf.Min(
-						GameState.Instance.PlayerHp + amount,
-						GameState.Instance.PlayerMaxHp
-					);
+				GameState.Instance.HealPlayer(amount);
 
 				// 播放回血音效
 				PlayHealSound();

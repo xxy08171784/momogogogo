@@ -23,28 +23,65 @@ public partial class BattleSystem : Node
 	{
 		GameState state = GameState.Instance;
 
-		// 怪方挡值：防御 + 护盾（破甲时忽略护盾）。
-		int enemyBlock =
-			enemy.Def + (state.IgnoreEnemyShield ? 0 : enemy.Shield);
+		MonsterAction action = enemy.GetCurrentAction();
+		int basePlayerAttack = Mathf.Max(state.PlayerAtk + state.TempAtk, 0);
+		int playerAttack = Mathf.Max(
+			Mathf.RoundToInt(basePlayerAttack * state.AttackMultiplier),
+			0
+		);
+		int playerDefense = state.GetEffectiveDefense();
+		int effectiveEnemyDefense = Mathf.Max(enemy.Def + action.DamageReduction, 0);
 
-		// ===== 玩家出手（蓄力：本回合不出手）=====
-		if (state.SkipPlayerAttack)
-		{
-			GD.Print("蓄力：本回合玩家不攻击");
-		}
-		else
-		{
-			int totalAttack =
-				Mathf.RoundToInt(
-					(state.PlayerAtk + state.TempAtk) * state.AttackMultiplier
-				) + state.FlatDamageBonus;
+		GD.Print(
+			$"{enemy.DisplayName} 当前行动：{action.Name}（{action.Description}）"
+		);
 
-			int damageToEnemy = Mathf.Max(totalAttack - enemyBlock, 0);
-			GD.Print($"玩家攻击：总攻 {totalAttack} - {enemy.DisplayName} 防御 {enemyBlock} = {damageToEnemy} 伤害");
+		if (!state.SkipPlayerAttack)
+		{
+			int damageToEnemy =
+				Mathf.Max(playerAttack - effectiveEnemyDefense, 0)
+				+ Mathf.Max(state.FlatDamageBonus, 0);
+			GD.Print(
+				$"玩家攻击：ATK {playerAttack} - {enemy.DisplayName} DEF {enemy.Def}" +
+				$" - 行动减伤 {action.DamageReduction} = {damageToEnemy} 伤害"
+			);
 
 			await player.PlayAttackAnimation();
-			enemy.TakeDamage(damageToEnemy);
+			// 破甲：本回合无视怪物护盾。
+			int actualDamageToEnemy = enemy.TakeDamage(damageToEnemy, state.IgnoreEnemyShield);
 			await enemy.PlayHitAnimation();
+
+			if (
+				actualDamageToEnemy > 0
+				&& state.LifestealHealAmount > 0
+				&& !state.LifestealUsedThisTurn
+			)
+			{
+				state.LifestealUsedThisTurn = true;
+				int healed = state.HealPlayer(state.LifestealHealAmount);
+				if (healed > 0)
+				{
+					player.PlayHealSound();
+					GD.Print($"嗜血：造成伤害后回复 {healed} 点生命");
+				}
+			}
+
+			if (action.ReflectTrueDamage > 0 && actualDamageToEnemy > 0)
+			{
+				int reflectedDamage = player.TakeTrueDamage(action.ReflectTrueDamage);
+				GD.Print(
+					$"{action.Name}：反弹 {reflectedDamage} 点真实伤害，" +
+					$"玩家 HP={state.PlayerHp}"
+				);
+				await player.PlayHitAnimation();
+
+				// 反伤可以在玩家击杀怪物的同一瞬间击败玩家；玩家失败优先结算。
+				if (state.PlayerHp <= 0)
+				{
+					GD.Print("玩家被反伤击败");
+					return BattleOutcome.PlayerDefeated;
+				}
+			}
 
 			if (enemy.IsDead())
 			{
@@ -53,29 +90,108 @@ public partial class BattleSystem : Node
 				return BattleOutcome.EnemyDefeated;
 			}
 		}
+		else
+		{
+			GD.Print("地块蓄力：本回合玩家不攻击");
+		}
 
-		// ========================================================
-		// 地块系统握手：幸运"免费行动" —— 本回合怪物不反击。
-		// 若队友重写 ResolveTurn，请保留这段：读取并清除 NoCounterThisBattle。
-		// ========================================================
+		// 幸运：本回合怪物跳过主动行动，但行动循环仍推进一格。
 		bool freeAction = state.NoCounterThisBattle;
 		state.NoCounterThisBattle = false;
-
 		if (freeAction)
 		{
-			GD.Print("幸运免费行动：怪物本回合不反击");
-			GD.Print($"回合战斗结束：玩家 HP={state.PlayerHp}，{enemy.DisplayName} HP={enemy.CurrentHp}");
+			GD.Print("幸运免费行动：怪物本回合跳过行动");
+			if (action.Damage > 0)
+				enemy.ConsumeNextAttackMultiplier();
+
+			enemy.AdvanceAction();
+			MonsterAction skippedNextAction = enemy.GetCurrentAction();
+			GD.Print(
+				$"回合战斗结束：玩家 HP={state.PlayerHp}，" +
+				$"{enemy.DisplayName} HP={enemy.CurrentHp}；下一行动={skippedNextAction.Name}"
+			);
 			return BattleOutcome.Continue;
 		}
 
-		// ===== 敌人反击 =====
-		int playerDefense = Mathf.Max(state.PlayerDef + state.TempDef, 0);
-		int damageToPlayer = Mathf.Max(enemy.Atk - playerDefense, 0);
-		GD.Print($"{enemy.DisplayName} 反击：ATK {enemy.Atk} - 玩家 DEF {playerDefense} = {damageToPlayer} 伤害");
+		// 本回合被玩家护盾吸收掉的伤害（反击地块据此反弹）。
+		int shieldedDamageThisTurn = 0;
 
-		await enemy.PlayAttackAnimation();
-		player.TakeDamage(damageToPlayer, out int absorbedByShield);
-		await player.PlayHitAnimation();
+		if (action.Damage > 0)
+		{
+			int attackMultiplier = enemy.ConsumeNextAttackMultiplier();
+			int rawDamage =
+				(action.Damage + enemy.PowerBonus)
+				* attackMultiplier;
+			int damageAfterDefense = Mathf.Max(rawDamage - playerDefense, 0);
+
+			GD.Print(
+				$"{enemy.DisplayName} 使用 {action.Name}：" +
+				$"({action.Damage}+力量{enemy.PowerBonus}) x {attackMultiplier} - 玩家有效DEF {playerDefense}" +
+				$" = {damageAfterDefense} 点待结算伤害"
+			);
+
+			await enemy.PlayAttackAnimation();
+			int hpDamage = player.TakeDamage(damageAfterDefense, out shieldedDamageThisTurn);
+			await player.PlayHitAnimation();
+
+			GD.Print(
+				$"玩家实际损失 {hpDamage} 点生命，" +
+				$"HP={state.PlayerHp}，护盾={state.TotalPlayerShield}"
+			);
+		}
+
+		if (action.Heal > 0)
+		{
+			int healAmount = action.Heal;
+			if (action.DoubleHealWhenPlayerLow && state.PlayerHp < 10)
+				healAmount *= 2;
+
+			int actualHeal = enemy.Heal(healAmount);
+			GD.Print(
+				$"{enemy.DisplayName} 使用 {action.Name}：恢复 {actualHeal} 点生命，" +
+				$"HP={enemy.CurrentHp}/{enemy.MaxHp}"
+			);
+		}
+
+		if (action.ChargeMultiplier > 1)
+		{
+			enemy.SetNextAttackMultiplier(action.ChargeMultiplier);
+			GD.Print(
+				$"{enemy.DisplayName} 使用 {action.Name}：下一次攻击 x{action.ChargeMultiplier}"
+			);
+		}
+
+		if (action.ShieldGain > 0)
+		{
+			int gained = enemy.GainShield(action.ShieldGain);
+			GD.Print(
+				$"{enemy.DisplayName} 使用 {action.Name}：获得 {gained} 点护盾，" +
+				$"当前护盾={enemy.CurrentShield}"
+			);
+		}
+
+		if (action.PowerGain > 0)
+		{
+			int gained = enemy.GainPower(action.PowerGain);
+			GD.Print(
+				$"{enemy.DisplayName} 使用 {action.Name}：力量 +{gained}，" +
+				$"当前力量={enemy.PowerBonus}"
+			);
+		}
+
+		if (action.ApplyBlackDomain)
+		{
+			state.ApplyBlackDomain();
+			GD.Print("黑化领域：玩家防御与生命回复效果永久降低50%");
+		}
+
+		if (action.LockPlayerNextTurn)
+		{
+			state.SkipMovementNextTurn = true;
+			GD.Print(
+				$"{enemy.DisplayName} 使用 {action.Name}：玩家下一回合只能原地战斗"
+			);
+		}
 
 		if (state.PlayerHp <= 0)
 		{
@@ -88,10 +204,10 @@ public partial class BattleSystem : Node
 		{
 			state.ReflectShieldDamage = false;
 
-			if (absorbedByShield > 0)
+			if (shieldedDamageThisTurn > 0)
 			{
-				int reflectDamage = Mathf.Max(absorbedByShield - enemy.Def, 0);
-				GD.Print($"反击：护盾吸收 {absorbedByShield} 点，反弹 {reflectDamage} 点给 {enemy.DisplayName}");
+				int reflectDamage = Mathf.Max(shieldedDamageThisTurn - enemy.Def, 0);
+				GD.Print($"反击：护盾吸收 {shieldedDamageThisTurn} 点，反弹 {reflectDamage} 点给 {enemy.DisplayName}");
 
 				if (reflectDamage > 0)
 				{
@@ -108,7 +224,12 @@ public partial class BattleSystem : Node
 			}
 		}
 
-		GD.Print($"回合战斗结束：玩家 HP={state.PlayerHp}，{enemy.DisplayName} HP={enemy.CurrentHp}");
+		enemy.AdvanceAction();
+		MonsterAction nextAction = enemy.GetCurrentAction();
+		GD.Print(
+			$"回合战斗结束：玩家 HP={state.PlayerHp}，" +
+			$"{enemy.DisplayName} HP={enemy.CurrentHp}；下一行动={nextAction.Name}"
+		);
 		return BattleOutcome.Continue;
 	}
 }

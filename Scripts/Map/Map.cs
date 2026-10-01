@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -7,6 +8,25 @@ public partial class Map : Node2D
 	private const int AttackUpgradeAmount = 1;
 	private const int DefenseUpgradeAmount = 1;
 	private const int HpUpgradeAmount = 5;
+	private const int DiceUpgradeAmount = 3;
+	private const int ResonanceUpgradeAmount = 10;
+	private const int LifestealUpgradeAmount = 3;
+	private const int TurnShieldUpgradeAmount = 4;
+
+	private enum CharacterUpgradeType
+	{
+		Attack,
+		Defense,
+		MaxHp,
+		RedDice,
+		BlueDice,
+		DoubleDiceResonance,
+		Lifesteal,
+		TurnShield
+	}
+
+	private readonly CharacterUpgradeType[] currentUpgradeChoices =
+		new CharacterUpgradeType[3];
 
 	private Player player;
 	private Goblin goblin;
@@ -213,10 +233,30 @@ public partial class Map : Node2D
 		int value
 	)
 	{
+		GameState state = GameState.Instance;
+
 		if (color == "red")
-			GameState.Instance.TempAtk += value;
+		{
+			state.TempAtk += value;
+			state.TempAtk += state.RedDiceAtkBonus;
+		}
 		else if (color == "blue")
-			GameState.Instance.TempDef += value;
+		{
+			state.TempDef += value;
+			state.TempDef += state.BlueDiceDefBonus;
+		}
+
+		if (
+			state.Dice["red"] == state.Dice["blue"]
+			&& state.DoubleDiceResonanceBonus > 0
+		)
+		{
+			state.TempAtk += state.DoubleDiceResonanceBonus;
+			state.TempDef += state.DoubleDiceResonanceBonus;
+			GD.Print(
+				$"双骰共鸣：红蓝骰点数相同，本回合攻防 +{state.DoubleDiceResonanceBonus}"
+			);
+		}
 	}
 
 	public void ResolveTileEffect()
@@ -249,9 +289,12 @@ public partial class Map : Node2D
 	{
 		goblin = bossRushSystem.RestoreBoss(
 			savedBoss.Index,
-			savedBoss.CurrentHp
+			savedBoss.CurrentHp,
+			savedBoss.ActionIndex,
+			savedBoss.NextAttackMultiplier,
+			savedBoss.CurrentShield,
+			savedBoss.PowerBonus
 		);
-
 		if (goblin == null)
 		{
 			GD.PrintErr(
@@ -280,7 +323,11 @@ public partial class Map : Node2D
 		return SaveManager.Instance.SaveGame(
 			allTiles,
 			bossRushSystem.CurrentBossIndex,
-			goblin.CurrentHp
+			goblin.CurrentHp,
+			goblin.CurrentActionIndex,
+			goblin.NextAttackMultiplier,
+			goblin.CurrentShield,
+			goblin.PowerBonus
 		);
 	}
 
@@ -297,19 +344,21 @@ public partial class Map : Node2D
 
 	private void UpdatePlayerStatsDisplay()
 	{
-		int totalAtk =
-			GameState.Instance.PlayerAtk
-			+ GameState.Instance.TempAtk;
-
-		int totalDef =
-			GameState.Instance.PlayerDef
-			+ GameState.Instance.TempDef;
+		GameState state = GameState.Instance;
+		int totalAtk = Mathf.Max(
+			Mathf.RoundToInt(
+				(state.PlayerAtk + state.TempAtk)
+				* state.AttackMultiplier
+			) + state.FlatDamageBonus,
+			0
+		);
+		int totalDef = state.GetEffectiveDefense();
 
 		playerStatsLabel.Text =
 			$"玩家属性\n" +
 			$"攻击 = {totalAtk}\n" +
 			$"防御 = {totalDef}\n" +
-			$"护盾 = {GameState.Instance.PlayerShield} / {GameState.MaxShield}";
+			$"护盾 = {state.TotalPlayerShield}";
 	}
 
 	private void UpdateBossStatsDisplay()
@@ -323,12 +372,27 @@ public partial class Map : Node2D
 			return;
 		}
 
+		MonsterAction action = goblin.GetCurrentAction();
+		string chargeText = goblin.NextAttackMultiplier > 1
+			? $"\n蓄力：下一次攻击 x{goblin.NextAttackMultiplier}"
+			: "";
+		string shieldText = goblin.CurrentShield > 0
+			? $"\n护盾 = {goblin.CurrentShield}"
+			: "";
+		string powerText = goblin.PowerBonus > 0
+			? $"\n力量：{goblin.PowerBonus}"
+			: "";
+
 		bossStatsLabel.Text =
 			$"第 {bossRushSystem.CurrentBossNumber} / {bossRushSystem.BossCount} 只\n" +
 			$"{goblin.DisplayName}\n" +
 			$"HP = {goblin.CurrentHp} / {goblin.MaxHp}\n" +
-			$"攻击 = {goblin.Atk}\n" +
-			$"防御 = {goblin.Def}";
+			$"攻击 = {goblin.Atk}    防御 = {goblin.Def}\n" +
+			$"行动 {goblin.CurrentActionIndex + 1}/{goblin.ActionCount}：{action.Name}\n" +
+			$"{action.Description}" +
+			chargeText +
+			shieldText +
+			powerText;
 	}
 
 	private void OnBossHpChanged(
@@ -356,25 +420,18 @@ public partial class Map : Node2D
 	)
 	{
 		GameState.Instance.ResetTempStats();
+		GameState.Instance.ResetTileTurnModifiers();
+		GameState.Instance.EndTurn();
 
 		UpdatePlayerStatsDisplay();
 
 		switch (outcome)
 		{
 			case BattleSystem.BattleOutcome.EnemyDefeated:
-
-				if (bossRushSystem.HasNextBoss)
-				{
-					SetTurnState(
-						GameState.TurnState.Upgrading
-					);
-
-					ShowUpgradePanel();
-				}
-				else
-				{
-					EnterVictoryScene();
-				}
+				SetTurnState(
+					GameState.TurnState.Upgrading
+				);
+				ShowUpgradePanel();
 
 				break;
 
@@ -398,6 +455,8 @@ public partial class Map : Node2D
 
 	private void ShowUpgradePanel()
 	{
+		RollUpgradeChoices();
+
 		upgradeTitleLabel.Text =
 			$"击败 {goblin.DisplayName}！选择一项升级";
 
@@ -405,24 +464,95 @@ public partial class Map : Node2D
 			$"当前：HP {GameState.Instance.PlayerHp}/{GameState.Instance.PlayerMaxHp}    " +
 			$"攻击 {GameState.Instance.PlayerAtk}    " +
 			$"防御 {GameState.Instance.PlayerDef}    " +
-			$"护盾 {GameState.Instance.PlayerShield}/{GameState.MaxShield}";
+			$"护盾 {GameState.Instance.TotalPlayerShield}";
 
-		upgradeAttackButton.Text =
-			$"攻击 +{AttackUpgradeAmount}";
-
-		upgradeDefenseButton.Text =
-			$"防御 +{DefenseUpgradeAmount}";
-
-		upgradeHpButton.Text =
-			$"最大生命 +{HpUpgradeAmount}";
+		upgradeAttackButton.Text = GetUpgradeText(currentUpgradeChoices[0]);
+		upgradeDefenseButton.Text = GetUpgradeText(currentUpgradeChoices[1]);
+		upgradeHpButton.Text = GetUpgradeText(currentUpgradeChoices[2]);
 
 		upgradePanel.Visible = true;
 	}
 
-	private void ApplyUpgrade(
-		string choice,
-		int amount
-	)
+	private void RollUpgradeChoices()
+	{
+		List<CharacterUpgradeType> pool = new()
+		{
+			CharacterUpgradeType.Attack,
+			CharacterUpgradeType.Defense,
+			CharacterUpgradeType.MaxHp,
+			CharacterUpgradeType.RedDice,
+			CharacterUpgradeType.BlueDice,
+			CharacterUpgradeType.DoubleDiceResonance,
+			CharacterUpgradeType.Lifesteal,
+			CharacterUpgradeType.TurnShield
+		};
+
+		for (int choiceIndex = 0; choiceIndex < currentUpgradeChoices.Length; choiceIndex++)
+		{
+			int totalWeight = 0;
+			foreach (CharacterUpgradeType type in pool)
+				totalWeight += GetUpgradeWeight(type);
+
+			int roll = GD.RandRange(1, totalWeight);
+			int cumulative = 0;
+			int selectedIndex = 0;
+
+			for (int i = 0; i < pool.Count; i++)
+			{
+				cumulative += GetUpgradeWeight(pool[i]);
+				if (roll <= cumulative)
+				{
+					selectedIndex = i;
+					break;
+				}
+			}
+
+			currentUpgradeChoices[choiceIndex] = pool[selectedIndex];
+			pool.RemoveAt(selectedIndex);
+		}
+	}
+
+	private static int GetUpgradeWeight(CharacterUpgradeType type)
+	{
+		return type switch
+		{
+			CharacterUpgradeType.Attack => 3,
+			CharacterUpgradeType.Defense => 3,
+			CharacterUpgradeType.MaxHp => 3,
+			CharacterUpgradeType.RedDice => 3,
+			CharacterUpgradeType.BlueDice => 3,
+			CharacterUpgradeType.DoubleDiceResonance => 1,
+			CharacterUpgradeType.Lifesteal => 1,
+			CharacterUpgradeType.TurnShield => 1,
+			_ => 1
+		};
+	}
+
+	private static string GetUpgradeText(CharacterUpgradeType type)
+	{
+		return type switch
+		{
+			CharacterUpgradeType.Attack =>
+				"攻击强化\n基础攻击永久 +1",
+			CharacterUpgradeType.Defense =>
+				"防御强化\n基础防御永久 +1",
+			CharacterUpgradeType.MaxHp =>
+				"生命强化\n最大生命 +5\n立即回复5点",
+			CharacterUpgradeType.RedDice =>
+				"红骰磨砺\n选择红骰时攻击 +3",
+			CharacterUpgradeType.BlueDice =>
+				"蓝骰磨砺\n选择蓝骰时防御 +3",
+			CharacterUpgradeType.DoubleDiceResonance =>
+				"双骰共鸣\n红蓝点数相同\n本回合攻防 +10",
+			CharacterUpgradeType.Lifesteal =>
+				"嗜血\n造成伤害后回复3\n每回合1次",
+			CharacterUpgradeType.TurnShield =>
+				"护盾\n每回合开始获得4护盾\n回合结束消失",
+			_ => "未知升级"
+		};
+	}
+
+	private void ApplyUpgrade(CharacterUpgradeType choice)
 	{
 		if (
 			GameState.Instance.CurrentTurnState
@@ -430,9 +560,40 @@ public partial class Map : Node2D
 		)
 			return;
 
-		if (!player.Upgrade(choice, amount))
-			return;
+		GameState state = GameState.Instance;
+		switch (choice)
+		{
+			case CharacterUpgradeType.Attack:
+				state.PlayerAtk += AttackUpgradeAmount;
+				break;
+			case CharacterUpgradeType.Defense:
+				state.PlayerDef += DefenseUpgradeAmount;
+				player.PlayDefendSound();
+				break;
+			case CharacterUpgradeType.MaxHp:
+				state.PlayerMaxHp += HpUpgradeAmount;
+				state.HealPlayer(HpUpgradeAmount);
+				player.PlayHealSound();
+				break;
+			case CharacterUpgradeType.RedDice:
+				state.RedDiceAtkBonus += DiceUpgradeAmount;
+				break;
+			case CharacterUpgradeType.BlueDice:
+				state.BlueDiceDefBonus += DiceUpgradeAmount;
+				break;
+			case CharacterUpgradeType.DoubleDiceResonance:
+				state.DoubleDiceResonanceBonus += ResonanceUpgradeAmount;
+				break;
+			case CharacterUpgradeType.Lifesteal:
+				state.LifestealHealAmount += LifestealUpgradeAmount;
+				break;
+			case CharacterUpgradeType.TurnShield:
+				state.TurnStartShieldAmount += TurnShieldUpgradeAmount;
+				break;
+		}
 
+		state.PlayerLevel += 1;
+		player.PlayUpgradeSound();
 		upgradePanel.Visible = false;
 
 		UpdatePlayerHealthDisplay();
@@ -486,26 +647,17 @@ public partial class Map : Node2D
 
 	private void OnUpgradeAttackPressed()
 	{
-		ApplyUpgrade(
-			"atk",
-			AttackUpgradeAmount
-		);
+		ApplyUpgrade(currentUpgradeChoices[0]);
 	}
 
 	private void OnUpgradeDefensePressed()
 	{
-		ApplyUpgrade(
-			"def",
-			DefenseUpgradeAmount
-		);
+		ApplyUpgrade(currentUpgradeChoices[1]);
 	}
 
 	private void OnUpgradeHpPressed()
 	{
-		ApplyUpgrade(
-			"hp",
-			HpUpgradeAmount
-		);
+		ApplyUpgrade(currentUpgradeChoices[2]);
 	}
 
 	public void SetTurnState(
@@ -536,18 +688,39 @@ public partial class Map : Node2D
 		)
 			return;
 
-		SetTurnState(
-			GameState.TurnState.Rolling
-		);
+		GameState.Instance.BeginTurn();
+		UpdatePlayerStatsDisplay();
 
-		// 幸运"免费行动"：若积攒了免费行动，本回合战斗怪物不反击
+		// 幸运"免费行动"：下一次玩家行动中，怪物跳过自己的主动行动。
+		// 黑化领域的原地战斗同样属于一次玩家行动，因此也可以消耗幸运。
 		if (GameState.Instance.FreeActionsPending > 0)
 		{
 			GameState.Instance.FreeActionsPending -= 1;
 			GameState.Instance.NoCounterThisBattle = true;
-			GD.Print("幸运：本次行动怪物不反击");
+			GD.Print("幸运：本次行动怪物跳过行动");
 		}
 
+		if (GameState.Instance.SkipMovementNextTurn)
+		{
+			// 黑化领域：本回合完全跳过骰子、移动和地块收益，
+			// TempAtk/TempDef 保持 0，直接使用玩家基础攻防进入战斗。
+			GameState.Instance.SkipMovementNextTurn = false;
+			GameState.Instance.ResetTempStats();
+			GameState.Instance.ResetTileTurnModifiers();
+			UpdatePlayerStatsDisplay();
+			UpdateBossStatsDisplay();
+
+			GD.Print("黑化领域生效：玩家本回合原地以基础攻防进行战斗");
+			SetTurnState(GameState.TurnState.Battling);
+
+			BattleSystem.BattleOutcome lockedOutcome = await battleSystem.ResolveTurn();
+			UpdatePlayerHealthDisplay();
+			UpdateBossStatsDisplay();
+			FinishTurn(lockedOutcome);
+			return;
+		}
+
+		SetTurnState(GameState.TurnState.Rolling);
 		GameState.Instance.ResetTempStats();
   
 		UpdatePlayerStatsDisplay();

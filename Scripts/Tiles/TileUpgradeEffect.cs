@@ -42,13 +42,10 @@ public abstract class TileUpgradeEffect
 	protected static void HealPlayer(int amount)
 	{
 		GameState state = GameState.Instance;
+		int healed = state.HealPlayer(amount);
 
-		if (amount <= 0 || state.PlayerHp >= state.PlayerMaxHp)
-			return;
-
-		int healed = Mathf.Min(amount, state.PlayerMaxHp - state.PlayerHp);
-		state.PlayerHp += healed;
-		GD.Print($"回血 +{healed}，当前 HP {state.PlayerHp}/{state.PlayerMaxHp}");
+		if (healed > 0)
+			GD.Print($"回血 +{healed}，当前 HP {state.PlayerHp}/{state.PlayerMaxHp}");
 	}
 
 	// 本回合总攻击力（含蓄力倍率）。
@@ -58,11 +55,10 @@ public abstract class TileUpgradeEffect
 		return Mathf.RoundToInt((state.PlayerAtk + state.TempAtk) * state.AttackMultiplier);
 	}
 
-	// 本回合总防御力。
+	// 本回合有效防御力（含黑化领域等减益）。
 	protected static int TotalDefense()
 	{
-		GameState state = GameState.Instance;
-		return state.PlayerDef + state.TempDef;
+		return GameState.Instance.GetEffectiveDefense();
 	}
 }
 

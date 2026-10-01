@@ -233,9 +233,7 @@ public partial class TileSystem : Node2D
 
 		if (state.PlayerHp < state.PlayerMaxHp)
 		{
-			int missing = state.PlayerMaxHp - state.PlayerHp;
-			int heal = Mathf.Min(tile.Value, missing);
-			state.PlayerHp += heal;
+			int heal = state.HealPlayer(tile.Value);
 			GD.Print($"踩中空白格：回复 {heal} 点生命（地块当前回血值 {tile.Value}）");
 			return;
 		}
