@@ -3,7 +3,7 @@ using System.Collections.Generic;
 // 纯存档数据，不保存任何 Godot Node 引用。
 public sealed class SaveGameData
 {
-	public int Version { get; set; } = 4;
+	public int Version { get; set; } = 5;
 	public long SavedAtUnixTime { get; set; }
 	public PlayerSaveData Player { get; set; } = new();
 	public DiceSaveData Dice { get; set; } = new();
@@ -48,6 +48,8 @@ public sealed class BossSaveData
 	public int NextAttackMultiplier { get; set; } = 1;
 	public int CurrentShield { get; set; }
 	public int PowerBonus { get; set; }
+	// 冰封：当前 Boss 的攻击削减，读档恢复。
+	public int EnemyDamageDebuff { get; set; }
 }
 
 public sealed class TileSaveData

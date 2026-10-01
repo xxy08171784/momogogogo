@@ -17,6 +17,7 @@ public static class TileUpgradeRegistry
 	{
 		return new TileUpgradeEffect[]
 		{
+			// 第一批
 			new ArmorBreak(),
 			new Bloodthirst(),
 			new Charge(),
@@ -25,6 +26,23 @@ public static class TileUpgradeRegistry
 			new Ward(),
 			new Healing(),
 			new Lucky(),
+			// 第二批
+			new Scorch(),
+			new Fury(),
+			new Resonance(),
+			new Freeze(),
+			new Thorns(),
+			new Echo(),
+			new Blessing(),
+			new Guidance(),
+			new Treasure(),
+			new Starlight(),
+			new Void(),
+			new BlackMarket(),
+			new Curse(),
+			new Shadow(),
+			new Sacrifice(),
+			new Convert(),
 		};
 	}
 

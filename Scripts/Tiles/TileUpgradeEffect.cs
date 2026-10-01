@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 // 地块升级效果基类。每个升级写一个子类，注册进 TileUpgradeRegistry。
 // 无状态单例：只读写 GameState，不持有任何回合数据。
@@ -60,10 +61,31 @@ public abstract class TileUpgradeEffect
 	{
 		return GameState.Instance.GetEffectiveDefense();
 	}
+
+	// 地块直接扣血（不经过护盾/防御），返回实际扣掉的血量。
+	protected static int DamagePlayer(int amount)
+	{
+		GameState state = GameState.Instance;
+		int safe = Mathf.Max(amount, 0);
+		int previous = state.PlayerHp;
+		state.PlayerHp = Mathf.Max(previous - safe, 0);
+		return previous - state.PlayerHp;
+	}
+
+	// 条件型用的生命比例：选骰时的 HP / 最大 HP。
+	protected static float HpRatio()
+	{
+		GameState state = GameState.Instance;
+
+		if (state.MaxHpAtSelection <= 0)
+			return 1f;
+
+		return (float)state.HpAtSelection / state.MaxHpAtSelection;
+	}
 }
 
-// 一次"地块结算"的上下文。第一批只用到 Tile/DiceMatched 与骰子数值；
-// HpAtSelection 目前取落点时的值，条件型到第二批才改成真正的"选骰时快照"。
+// 一次"地块结算"的上下文。
+// HpAtSelection/MaxHpAtSelection 由 Map 在选骰时快照写入，条件型据此判定。
 public sealed class TileEffectContext
 {
 	public MapTileData Tile;
@@ -73,4 +95,13 @@ public sealed class TileEffectContext
 	public int BlueValue;
 	public int HpAtSelection;
 	public int MaxHpAtSelection;
+
+	// 供效果操作其它地块：全部地块列表、当前格号。
+	public IList<MapTileData> AllTiles;
+	public int SelfIndex;
+
+	// 宝箱/献祭：声明"随机 N 个其它地块进度 +1"，由 TileSystem 统一执行。
+	public int RandomProgressGain;
+	// 若效果想精确指定某几格进度 +1，可直接往这里塞格号。
+	public List<int> ProgressGain;
 }

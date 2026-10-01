@@ -199,7 +199,24 @@ public partial class Map : Node2D
 		if (!SelectDiceColor(color))
 			return false;
 
-		int steps = GameState.Instance.Dice[color];
+		GameState state = GameState.Instance;
+
+		// 指引：重掷选中的那颗骰子，并用新值移动。
+		if (state.RerollAvailable)
+		{
+			state.RerollAvailable = false;
+			state.Dice[color] = GD.RandRange(1, 6);
+
+			Dice chosenDice = color == "red" ? redDice : blueDice;
+			GD.Print($"指引：重掷{color}骰 → {state.Dice[color]}");
+			await chosenDice.PlayRollAnimation(state.Dice[color]);
+		}
+
+		// 条件型（狂怒/暗影等）按"选骰时"判定，先做快照。
+		state.HpAtSelection = state.PlayerHp;
+		state.MaxHpAtSelection = state.PlayerMaxHp;
+
+		int steps = state.Dice[color];
 
 		ApplySelectedDiceBonus(color, steps);
 		UpdatePlayerStatsDisplay();
@@ -214,6 +231,14 @@ public partial class Map : Node2D
 
 		UpdatePlayerHealthDisplay();
 		UpdatePlayerStatsDisplay();
+
+		// 伤害型地块（未升级黑格/虚空/黑市/献祭）可能把玩家打到 0。
+		if (state.PlayerHp <= 0)
+		{
+			GD.Print("玩家被地块伤害击败");
+			EnterDefeatScene();
+			return true;
+		}
 
 		SetTurnState(GameState.TurnState.Battling);
 
@@ -267,6 +292,9 @@ public partial class Map : Node2D
 
 	private void SpawnNextBoss()
 	{
+		// 冰封的削减只作用于当前 Boss，刷新新 Boss 时清零。
+		GameState.Instance.EnemyDamageDebuff = 0;
+
 		if (goblin != null && IsInstanceValid(goblin))
 			goblin.HpChanged -= OnBossHpChanged;
 

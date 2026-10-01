@@ -72,6 +72,24 @@ public partial class GameState : Node
 	// 破甲：本回合无视怪物护盾
 	public bool IgnoreEnemyShield;
 
+	// ========================================================
+	// 第二批：条件判定 / 指引重掷 / 怪物伤害修正
+	// ========================================================
+
+	// 选骰时的 HP 快照（狂怒/暗影等条件型按"选骰时"判定）。
+	public int HpAtSelection;
+	public int MaxHpAtSelection;
+
+	// 指引：下一次投掷可重掷一个骰子（选骰时消耗）。
+	public bool RerollAvailable;
+
+	// 冰封：怪物攻击永久减（只影响当前 Boss，换 Boss 时清零）。
+	public int EnemyDamageDebuff;
+	// 诅咒：本回合怪物攻击加成。
+	public int EnemyDamageBoostThisTurn;
+	// 荆棘：本回合怪物命中玩家时反弹的固定伤害。
+	public int ThornsReflectDamage;
+
 	// 每次地块结算前调用，清掉上一回合遗留的战斗修正。
 	public void ResetTileTurnModifiers()
 	{
@@ -80,6 +98,8 @@ public partial class GameState : Node
 		AttackMultiplier = 1f;
 		ReflectShieldDamage = false;
 		IgnoreEnemyShield = false;
+		EnemyDamageBoostThisTurn = 0;
+		ThornsReflectDamage = 0;
 	}
 
 	public int PlayerPosition { get; set; }
@@ -127,6 +147,12 @@ public partial class GameState : Node
 		NoCounterThisBattle = false;
 		ReflectShieldDamage = false;
 		IgnoreEnemyShield = false;
+		HpAtSelection = 0;
+		MaxHpAtSelection = 0;
+		RerollAvailable = false;
+		EnemyDamageDebuff = 0;
+		EnemyDamageBoostThisTurn = 0;
+		ThornsReflectDamage = 0;
 		PlayerPosition = 0;
 		CurrentTurnState = TurnState.ReadyToRoll;
 		DiceColor = "red";

@@ -5,7 +5,7 @@ using System.Text.Json;
 
 public partial class SaveManager : Node
 {
-	public const int CurrentSaveVersion = 4;
+	public const int CurrentSaveVersion = 5;
 
 	// 全局访问点，其他脚本通过 SaveManager.Instance 调用
 	public static SaveManager Instance { get; private set; }
@@ -111,7 +111,8 @@ public partial class SaveManager : Node
 					ActionIndex = bossActionIndex,
 					NextAttackMultiplier = Math.Max(bossNextAttackMultiplier, 1),
 					CurrentShield = Math.Max(bossCurrentShield, 0),
-					PowerBonus = Math.Max(bossPowerBonus, 0)
+					PowerBonus = Math.Max(bossPowerBonus, 0),
+					EnemyDamageDebuff = Math.Max(state.EnemyDamageDebuff, 0)
 				}
 			};
 
@@ -218,6 +219,12 @@ public partial class SaveManager : Node
 		state.NoCounterThisBattle = false;
 		state.ReflectShieldDamage = false;
 		state.IgnoreEnemyShield = false;
+		state.EnemyDamageBoostThisTurn = 0;
+		state.ThornsReflectDamage = 0;
+		state.RerollAvailable = false;
+		state.HpAtSelection = 0;
+		state.MaxHpAtSelection = 0;
+		state.EnemyDamageDebuff = Math.Max(data.Boss.EnemyDamageDebuff, 0);
 		state.PlayerPosition = PosMod(data.Player.Position, GameState.TileCount);
 		state.DiceColor = data.Dice.SelectedColor == "blue" ? "blue" : "red";
 		state.Dice["red"] = data.Dice.RedValue;

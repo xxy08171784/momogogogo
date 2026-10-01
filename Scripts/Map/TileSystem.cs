@@ -14,6 +14,9 @@ public partial class TileSystem : Node2D
 	// 蓄力：下一回合攻击力总数 ×300%（其余升级数值见 Scripts/Tiles/Upgrades/）。
 	private const float ChargeMultiplier = 3.0f;
 
+	// 未升级黑格：踩中扣 2 血。
+	private const int BlackBaseDamage = 2;
+
 	// =========================
 	// UI 布局常量
 	// =========================
@@ -38,7 +41,9 @@ public partial class TileSystem : Node2D
 	private readonly List<ColorRect[]> tileProgressSegments = new();
 	private readonly List<Button> tileUpgradePrompts = new();
 	private int upgradingTileIndex = -1;
-	private int pendingAutoUpgradeTile = -1;
+
+	// 踩满进度、待升级的地块（宝箱/献祭可能一次顶满多格，需排队逐格弹面板）。
+	private readonly Queue<int> pendingUpgradeTiles = new();
 
 	private ColorRect upgradePanel;
 	private Label upgradeTitleLabel;
@@ -173,18 +178,21 @@ public partial class TileSystem : Node2D
 		ApplyBaseEffect(tile, diceMatches);
 
 		// 升级效果（叠加在基础效果之上）
-		ApplyUpgradeEffect(tile, diceMatches);
+		TileEffectContext effectCtx = BuildEffectContext(tile, diceMatches);
+		ApplyUpgradeEffect(tile, effectCtx);
 
-		// 踩踏计数：黑格无升级，不计数
-		if (tile.Color != MapTileData.TileColor.Black
-			&& tile.UpgradeChoice == MapTileData.TileUpgrade.None)
+		// 宝箱/献祭：随机 N 个其它地块进度 +1。
+		ApplyRandomProgressGain(tileIndex, effectCtx.RandomProgressGain);
+
+		// 踩踏计数（黑格也参与）；已升级的地块不再计数。
+		if (tile.UpgradeChoice == MapTileData.TileUpgrade.None)
 		{
 			tile.HitCount = Mathf.Min(tile.HitCount + 1, MapTileData.UpgradeThreshold);
 
 			if (tile.HitCount >= MapTileData.UpgradeThreshold)
 			{
-				// 进度满：本回合结束后自动弹出升级面板
-				pendingAutoUpgradeTile = tileIndex;
+				// 进度满：本回合结束后自动弹出升级面板（可能多格同时满，排队处理）。
+				pendingUpgradeTiles.Enqueue(tileIndex);
 				GD.Print($"地块 {tileIndex + 1} 踩满 {MapTileData.UpgradeThreshold} 次，准备升级");
 			}
 		}
@@ -214,6 +222,15 @@ public partial class TileSystem : Node2D
 			case MapTileData.TileColor.Blue:
 				if (diceMatches)
 					state.TempDef += tile.Value;
+				break;
+
+			case MapTileData.TileColor.Black:
+				// 未升级的黑格：踩中扣 2 血（升级后由升级效果取代）。
+				if (tile.UpgradeChoice == MapTileData.TileUpgrade.None)
+				{
+					state.PlayerHp = Mathf.Max(state.PlayerHp - BlackBaseDamage, 0);
+					GD.Print($"踩中黑色地块：损失 {BlackBaseDamage} 点生命，当前 HP {state.PlayerHp}");
+				}
 				break;
 		}
 	}
@@ -253,7 +270,7 @@ public partial class TileSystem : Node2D
 	// 升级效果
 	// =========================
 
-	private static void ApplyUpgradeEffect(MapTileData tile, bool diceMatches)
+	private void ApplyUpgradeEffect(MapTileData tile, TileEffectContext ctx)
 	{
 		if (tile.UpgradeChoice == MapTileData.TileUpgrade.None)
 			return;
@@ -263,10 +280,10 @@ public partial class TileSystem : Node2D
 		if (effect == null)
 			return;
 
-		effect.OnLanded(BuildEffectContext(tile, diceMatches));
+		effect.OnLanded(ctx);
 	}
 
-	private static TileEffectContext BuildEffectContext(MapTileData tile, bool diceMatches)
+	private TileEffectContext BuildEffectContext(MapTileData tile, bool diceMatches)
 	{
 		GameState state = GameState.Instance;
 
@@ -277,11 +294,53 @@ public partial class TileSystem : Node2D
 			DiceColor = state.DiceColor,
 			RedValue = state.Dice["red"],
 			BlueValue = state.Dice["blue"],
-			// 第一批没有"选骰时判定"的效果，这里取落点值即可；
-			// 条件型到第二批再改为真正的"选骰时快照"。
-			HpAtSelection = state.PlayerHp,
-			MaxHpAtSelection = state.PlayerMaxHp
+			// 条件型（狂怒/暗影）按"选骰时"判定，快照由 Map.HandleDiceSelected 写入。
+			HpAtSelection = state.HpAtSelection,
+			MaxHpAtSelection = state.MaxHpAtSelection,
+			AllTiles = tiles,
+			SelfIndex = tiles.IndexOf(tile)
 		};
+	}
+
+	// 宝箱/献祭：随机 count 个其它地块（黑格也算）进度 +1，顶满则排队升级。
+	private void ApplyRandomProgressGain(int selfIndex, int count)
+	{
+		if (count <= 0 || tiles.Count <= 1)
+			return;
+
+		List<int> candidates = new();
+
+		for (int i = 0; i < tiles.Count; i++)
+		{
+			if (i != selfIndex)
+				candidates.Add(i);
+		}
+
+		// Fisher-Yates 打乱取前 count。
+		for (int i = candidates.Count - 1; i > 0; i--)
+		{
+			int j = GD.RandRange(0, i);
+			(candidates[i], candidates[j]) = (candidates[j], candidates[i]);
+		}
+
+		for (int i = 0; i < Mathf.Min(count, candidates.Count); i++)
+		{
+			int index = candidates[i];
+			MapTileData target = tiles[index];
+
+			if (target.UpgradeChoice != MapTileData.TileUpgrade.None)
+				continue;
+
+			target.HitCount = Mathf.Min(target.HitCount + 1, MapTileData.UpgradeThreshold);
+
+			if (target.HitCount >= MapTileData.UpgradeThreshold)
+			{
+				pendingUpgradeTiles.Enqueue(index);
+				GD.Print($"地块 {index + 1} 进度满，准备升级");
+			}
+		}
+
+		RefreshAllTileUI();
 	}
 
 	// =========================================================
@@ -292,13 +351,6 @@ public partial class TileSystem : Node2D
 	{
 		for (int i = 0; i < tiles.Count; i++)
 		{
-			if (tiles[i].Color == MapTileData.TileColor.Black)
-			{
-				tileProgressSegments.Add(null);
-				tileUpgradePrompts.Add(null);
-				continue;
-			}
-
 			Node2D marker = tilePoints.GetNode<Node2D>($"Tile{i}");
 			Vector2 origin = marker.Position + new Vector2(BarOffsetX, BarOffsetY);
 
@@ -391,8 +443,7 @@ public partial class TileSystem : Node2D
 				continue;
 
 			MapTileData tile = tiles[i];
-			bool ready = tile.Color != MapTileData.TileColor.Black
-				&& tile.HitCount >= MapTileData.UpgradeThreshold
+			bool ready = tile.HitCount >= MapTileData.UpgradeThreshold
 				&& tile.UpgradeChoice == MapTileData.TileUpgrade.None;
 
 			prompt.Visible = ready;
@@ -524,6 +575,7 @@ public partial class TileSystem : Node2D
 		{
 			MapTileData.TileColor.Red => "红色",
 			MapTileData.TileColor.Blue => "蓝色",
+			MapTileData.TileColor.Black => "黑色",
 			_ => "白色"
 		};
 
@@ -581,10 +633,35 @@ public partial class TileSystem : Node2D
 
 		tile.UpgradeChoice = currentUpgradeOptions[optionIndex];
 
+		// 转化：黑格立刻变随机颜色，并直接获得该颜色的一次加权升级。
+		if (tile.UpgradeChoice == MapTileData.TileUpgrade.Convert)
+			ApplyConvertTransform(tile);
+
 		CloseUpgradePanel();
 		RefreshTileUI(index);
 
 		GD.Print($"地块 {index + 1} 升级为：{tile.UpgradeChoice}");
+	}
+
+	// 转化：把黑格变成随机颜色（红/蓝/白），并立即赋予该颜色的一次加权升级。
+	private static void ApplyConvertTransform(MapTileData tile)
+	{
+		MapTileData.TileColor[] colors =
+		{
+			MapTileData.TileColor.Red,
+			MapTileData.TileColor.Blue,
+			MapTileData.TileColor.White
+		};
+
+		MapTileData.TileColor newColor = colors[GD.RandRange(0, colors.Length - 1)];
+		tile.Color = newColor;
+
+		TileUpgradeEffect[] draws = TileUpgradeRegistry.DrawWeighted(newColor, 1);
+
+		if (draws.Length > 0)
+			tile.UpgradeChoice = draws[0].Id;
+
+		GD.Print($"转化：地块变为 {newColor}，直接升级为 {tile.UpgradeChoice}");
 	}
 
 	private void OnUpgradeCancelPressed()
@@ -595,9 +672,19 @@ public partial class TileSystem : Node2D
 	private void CloseUpgradePanel()
 	{
 		upgradePanel.Visible = false;
-		rollButton.Disabled = false;
 		upgradingTileIndex = -1;
 		SetPromptStates();
+
+		// 还有排队的地块升级：逐格弹出，期间禁止掷骰。
+		if (pendingUpgradeTiles.Count > 0)
+		{
+			rollButton.Disabled = true;
+			TryAutoOpenUpgrade(GameState.TurnState.ReadyToRoll);
+		}
+		else
+		{
+			rollButton.Disabled = false;
+		}
 	}
 
 	// 地块类型 → 升级选项由 TileUpgradeRegistry 提供
@@ -615,7 +702,7 @@ public partial class TileSystem : Node2D
 		TryAutoOpenUpgrade(newState);
 	}
 
-	// 踩满进度后，等回合结束（回到 ReadyToRoll）自动弹出升级面板。
+	// 踩满进度后，等回合结束（回到 ReadyToRoll）自动弹出升级面板；多格排队逐格处理。
 	private void TryAutoOpenUpgrade(GameState.TurnState newState)
 	{
 		if (newState != GameState.TurnState.ReadyToRoll)
@@ -624,20 +711,19 @@ public partial class TileSystem : Node2D
 		if (upgradePanel == null || upgradePanel.Visible)
 			return;
 
-		int tileIndex = pendingAutoUpgradeTile;
-		if (tileIndex < 0 || tileIndex >= tiles.Count)
-			return;
-
-		MapTileData tile = tiles[tileIndex];
-
-		if (tile.UpgradeChoice != MapTileData.TileUpgrade.None)
+		while (pendingUpgradeTiles.Count > 0)
 		{
-			pendingAutoUpgradeTile = -1;
+			int tileIndex = pendingUpgradeTiles.Dequeue();
+
+			if (tileIndex < 0 || tileIndex >= tiles.Count)
+				continue;
+
+			if (tiles[tileIndex].UpgradeChoice != MapTileData.TileUpgrade.None)
+				continue;
+
+			upgradingTileIndex = tileIndex;
+			ShowUpgradePanel(tileIndex);
 			return;
 		}
-
-		pendingAutoUpgradeTile = -1;
-		upgradingTileIndex = tileIndex;
-		ShowUpgradePanel(tileIndex);
 	}
 }

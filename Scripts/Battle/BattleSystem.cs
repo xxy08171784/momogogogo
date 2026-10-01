@@ -119,14 +119,20 @@ public partial class BattleSystem : Node
 		if (action.Damage > 0)
 		{
 			int attackMultiplier = enemy.ConsumeNextAttackMultiplier();
-			int rawDamage =
-				(action.Damage + enemy.PowerBonus)
-				* attackMultiplier;
+
+			// 冰封（永久减）与诅咒（本回合加）作用于怪物的原始伤害。
+			int rawDamage = Mathf.Max(
+				(action.Damage + enemy.PowerBonus) * attackMultiplier
+				- state.EnemyDamageDebuff
+				+ state.EnemyDamageBoostThisTurn,
+				0
+			);
 			int damageAfterDefense = Mathf.Max(rawDamage - playerDefense, 0);
 
 			GD.Print(
 				$"{enemy.DisplayName} 使用 {action.Name}：" +
-				$"({action.Damage}+力量{enemy.PowerBonus}) x {attackMultiplier} - 玩家有效DEF {playerDefense}" +
+				$"({action.Damage}+力量{enemy.PowerBonus}) x {attackMultiplier}" +
+				$" -冰封{state.EnemyDamageDebuff} +诅咒{state.EnemyDamageBoostThisTurn} - 玩家有效DEF {playerDefense}" +
 				$" = {damageAfterDefense} 点待结算伤害"
 			);
 
@@ -138,6 +144,21 @@ public partial class BattleSystem : Node
 				$"玩家实际损失 {hpDamage} 点生命，" +
 				$"HP={state.PlayerHp}，护盾={state.TotalPlayerShield}"
 			);
+
+			// 荆棘：怪物使用伤害行动时反弹固定伤害（可击杀）。
+			if (state.ThornsReflectDamage > 0)
+			{
+				GD.Print($"荆棘：反弹 {state.ThornsReflectDamage} 点伤害给 {enemy.DisplayName}");
+				enemy.TakeDamage(state.ThornsReflectDamage);
+				await enemy.PlayHitAnimation();
+
+				if (enemy.IsDead())
+				{
+					await enemy.PlayDeathAnimation();
+					GD.Print($"{enemy.DisplayName} 被荆棘反弹击杀");
+					return BattleOutcome.EnemyDefeated;
+				}
+			}
 		}
 
 		if (action.Heal > 0)

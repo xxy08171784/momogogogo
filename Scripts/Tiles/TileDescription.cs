@@ -41,7 +41,7 @@ public static class TileDescription
 				return "基础：首次踩中激活；之后回血，满血时转为护盾";
 
 			default:
-				return "基础：暂无效果";
+				return "基础：未升级时踩中扣 2 血";
 		}
 	}
 
@@ -80,9 +80,6 @@ public static class TileDescription
 
 	private static string ProgressText(MapTileData tile)
 	{
-		if (tile.Color == MapTileData.TileColor.Black)
-			return "升级：当前不可升级";
-
 		return $"升级进度：{tile.HitCount} / {MapTileData.UpgradeThreshold}";
 	}
 }
