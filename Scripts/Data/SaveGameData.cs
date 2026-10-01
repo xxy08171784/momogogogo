@@ -31,6 +31,8 @@ public sealed class PlayerSaveData
 	public int LifestealHealAmount { get; set; }
 	public int TurnStartShieldAmount { get; set; }
 	public bool BlackDomainApplied { get; set; }
+	// 角色升级次数（旧档缺省为空字典，兼容）。
+	public Dictionary<string, int> UpgradeCounts { get; set; } = new();
 }
 
 public sealed class DiceSaveData

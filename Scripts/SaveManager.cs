@@ -96,7 +96,8 @@ public partial class SaveManager : Node
 					DoubleDiceResonanceBonus = state.DoubleDiceResonanceBonus,
 					LifestealHealAmount = state.LifestealHealAmount,
 					TurnStartShieldAmount = state.TurnStartShieldAmount,
-					BlackDomainApplied = state.BlackDomainApplied
+					BlackDomainApplied = state.BlackDomainApplied,
+					UpgradeCounts = new Dictionary<string, int>(state.UpgradeCounts)
 				},
 				Dice = new DiceSaveData
 				{
@@ -207,6 +208,13 @@ public partial class SaveManager : Node
 		state.TurnStartShieldAmount = Math.Max(data.Player.TurnStartShieldAmount, 0);
 		state.LifestealUsedThisTurn = false;
 		state.BlackDomainApplied = data.Player.BlackDomainApplied;
+
+		state.UpgradeCounts.Clear();
+		if (data.Player.UpgradeCounts != null)
+		{
+			foreach (KeyValuePair<string, int> pair in data.Player.UpgradeCounts)
+				state.UpgradeCounts[pair.Key] = pair.Value;
+		}
 		state.DefenseEffectMultiplier = state.BlackDomainApplied ? 0.5f : 1f;
 		state.HealingEffectMultiplier = state.BlackDomainApplied ? 0.5f : 1f;
 		state.TempAtk = 0;

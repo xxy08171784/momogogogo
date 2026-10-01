@@ -36,6 +36,9 @@ public partial class GameState : Node
 	public int TurnStartShieldAmount { get; set; }
 	public bool LifestealUsedThisTurn { get; set; }
 
+	// 角色升级各自的选取次数（key = CharacterUpgradeType 枚举名），供"已获得升级"面板显示。
+	public Dictionary<string, int> UpgradeCounts { get; } = new();
+
 	// 黑化领域：只施加一次，之后永久影响本局。
 	public bool BlackDomainApplied { get; set; }
 	public float DefenseEffectMultiplier { get; set; } = 1f;
@@ -134,6 +137,7 @@ public partial class GameState : Node
 		LifestealHealAmount = 0;
 		TurnStartShieldAmount = 0;
 		LifestealUsedThisTurn = false;
+		UpgradeCounts.Clear();
 		BlackDomainApplied = false;
 		DefenseEffectMultiplier = 1f;
 		HealingEffectMultiplier = 1f;

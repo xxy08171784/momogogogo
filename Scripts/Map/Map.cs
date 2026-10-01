@@ -52,6 +52,7 @@ public partial class Map : Node2D
 	private Button upgradeHpButton;
 	private Node2D tilePointsNode;
 	private TileSystem tileSystem;
+	private PlayerUpgradePanel playerUpgradePanel;
 
 	private static readonly MapTileData.TileColor[] TileColors =
 	{
@@ -121,6 +122,12 @@ public partial class Map : Node2D
 			GameState.Instance.ResetToDefaults();
 
 		CreateTileSystem();
+
+		// 左上角常驻的"已获得升级"面板。
+		playerUpgradePanel = new PlayerUpgradePanel();
+		playerUpgradePanel.Initialize(GD.Load<Font>("res://Style/ChineseUIFont.tres"));
+		AddChild(playerUpgradePanel);
+		playerUpgradePanel.Refresh();
 
 		player.SnapToTile(GameState.Instance.PlayerPosition);
 
@@ -620,12 +627,18 @@ public partial class Map : Node2D
 				break;
 		}
 
+		// 记录本项被选的次数（供左上角"已获得升级"面板显示）。
+		string upgradeKey = choice.ToString();
+		state.UpgradeCounts[upgradeKey] = state.UpgradeCounts.GetValueOrDefault(upgradeKey) + 1;
+
 		state.PlayerLevel += 1;
 		player.PlayUpgradeSound();
 		upgradePanel.Visible = false;
 
 		UpdatePlayerHealthDisplay();
 		UpdatePlayerStatsDisplay();
+
+		playerUpgradePanel?.Refresh();
 
 		if (bossRushSystem.HasNextBoss)
 		{
