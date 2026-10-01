@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://0k1w22e7b3os"]
 
 [ext_resource type="Script" uid="uid://c4bs0sa2uxsc8" path="res://Scripts/Dice.cs" id="1_sq6wd"]
-[ext_resource type="Texture2D" path="res://Resources/dice1.png" id="2_sq6wd"]
+[ext_resource type="Texture2D" uid="uid://cygkw6wryor4e" path="res://Resources/dice1.png" id="2_sq6wd"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_gqjev"]
 radius = 79.755875

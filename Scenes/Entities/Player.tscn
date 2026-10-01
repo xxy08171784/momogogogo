@@ -14,13 +14,11 @@
 [ext_resource type="Texture2D" uid="uid://brjhwjewiqbu8" path="res://Image/Player/Walk/walk3.png" id="12_yu48m"]
 [ext_resource type="Texture2D" uid="uid://cmps1bo31synp" path="res://Image/Player/Walk/walk4.png" id="13_jpvho"]
 [ext_resource type="Texture2D" uid="uid://bvg5rhplg78np" path="res://Image/Player/Walk/walk9.png" id="14_toelj"]
-[ext_resource type="Texture2D" uid="uid://q5a86o22thhr" path="res://Image/Player/Walk/walk10.png" id="15_l8r55"]
-[ext_resource type="Texture2D" uid="uid://dri0rdihe5iu6" path="res://Image/Player/Walk/walk11.png" id="16_xilvn"]
-[ext_resource type="Texture2D" uid="uid://dixyefi4t2ucd" path="res://Image/Player/Walk/walk12.png" id="17_sgkpy"]
+[ext_resource type="Texture2D" uid="uid://pfmvtwl8m4fr" path="res://Image/Player/Walk/walk_4.png" id="15_xggc7"]
+[ext_resource type="Texture2D" uid="uid://b3y4wx4oyc5ol" path="res://Image/Player/Walk/walk_3.png" id="16_rhvgf"]
+[ext_resource type="Texture2D" uid="uid://c3wqj2tlfqpg5" path="res://Image/Player/Walk/walk_2.png" id="18_abqr1"]
 [ext_resource type="Texture2D" uid="uid://dmvbeoo0xkawq" path="res://Image/Player/Walk/walk13.png" id="18_jmt84"]
-[ext_resource type="Texture2D" uid="uid://8gi64eurwf06" path="res://Image/Player/Walk/walk14.png" id="19_55uah"]
-[ext_resource type="Texture2D" uid="uid://be75cwocnydg6" path="res://Image/Player/Walk/walk16.png" id="20_lro1s"]
-[ext_resource type="Texture2D" uid="uid://gtwtdli8eju4" path="res://Image/Player/Walk/walk15.png" id="21_m16cr"]
+[ext_resource type="Texture2D" uid="uid://c0rw3ej4ndvme" path="res://Image/Player/Walk/walk_1.png" id="19_rbvjg"]
 [ext_resource type="Texture2D" uid="uid://tjdqpwpg442o" path="res://Image/Player/Walk/walk5.png" id="22_seo8a"]
 [ext_resource type="Texture2D" uid="uid://ck33d6dvtgay4" path="res://Image/Player/Walk/walk6.png" id="23_noro0"]
 [ext_resource type="Texture2D" uid="uid://yfa62ybnamv6" path="res://Image/Player/Walk/walk7.png" id="24_30t7l"]
@@ -97,13 +95,13 @@ animations = [{
 "texture": ExtResource("14_toelj")
 }, {
 "duration": 1.0,
-"texture": ExtResource("15_l8r55")
+"texture": ExtResource("15_xggc7")
 }, {
 "duration": 1.0,
-"texture": ExtResource("16_xilvn")
+"texture": ExtResource("16_rhvgf")
 }, {
 "duration": 1.0,
-"texture": ExtResource("17_sgkpy")
+"texture": ExtResource("15_xggc7")
 }],
 "loop": 1,
 "name": &"walk_left",
@@ -114,13 +112,13 @@ animations = [{
 "texture": ExtResource("18_jmt84")
 }, {
 "duration": 1.0,
-"texture": ExtResource("19_55uah")
+"texture": ExtResource("18_abqr1")
 }, {
 "duration": 1.0,
-"texture": ExtResource("20_lro1s")
+"texture": ExtResource("19_rbvjg")
 }, {
 "duration": 1.0,
-"texture": ExtResource("21_m16cr")
+"texture": ExtResource("18_abqr1")
 }],
 "loop": 1,
 "name": &"walk_right",
@@ -154,7 +152,8 @@ shape = SubResource("RectangleShape2D_f8mcm")
 position = Vector2(-1, -74)
 scale = Vector2(0.6, 0.6)
 sprite_frames = SubResource("SpriteFrames_7vt1v")
-animation = &"idle"
+animation = &"walk_left"
+frame_progress = 0.9150239
 
 [node name="WalkSound" type="AudioStreamPlayer" parent="." unique_id=1152668630]
 stream = ExtResource("26_abqr1")

@@ -180,51 +180,50 @@ text = "最大生命 +5"
 [node name="TilePoints" type="Node2D" parent="." unique_id=383867725]
 metadata/_edit_lock_ = true
 
-[node name="Tile0" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile0" parent="TilePoints" unique_id=1407121752 instance=ExtResource("8_tile")]
 position = Vector2(605, 261)
-TileIndex = 0
 
-[node name="Tile1" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile1" parent="TilePoints" unique_id=1013116618 instance=ExtResource("8_tile")]
 position = Vector2(825, 261)
 TileIndex = 1
 
-[node name="Tile2" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile2" parent="TilePoints" unique_id=70282996 instance=ExtResource("8_tile")]
 position = Vector2(1053, 261)
 TileIndex = 2
 
-[node name="Tile3" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile3" parent="TilePoints" unique_id=720517942 instance=ExtResource("8_tile")]
 position = Vector2(1273, 261)
 TileIndex = 3
 
-[node name="Tile4" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile4" parent="TilePoints" unique_id=1842802818 instance=ExtResource("8_tile")]
 position = Vector2(1304, 471)
 TileIndex = 4
 
-[node name="Tile5" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile5" parent="TilePoints" unique_id=1006860978 instance=ExtResource("8_tile")]
 position = Vector2(1306, 677)
 TileIndex = 5
 
-[node name="Tile6" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile6" parent="TilePoints" unique_id=1614785718 instance=ExtResource("8_tile")]
 position = Vector2(1304, 883)
 TileIndex = 6
 
-[node name="Tile7" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile7" parent="TilePoints" unique_id=532441052 instance=ExtResource("8_tile")]
 position = Vector2(1053, 883)
 TileIndex = 7
 
-[node name="Tile8" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile8" parent="TilePoints" unique_id=315123433 instance=ExtResource("8_tile")]
 position = Vector2(830, 883)
 TileIndex = 8
 
-[node name="Tile9" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile9" parent="TilePoints" unique_id=604219858 instance=ExtResource("8_tile")]
 position = Vector2(607, 883)
 TileIndex = 9
 
-[node name="Tile10" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile10" parent="TilePoints" unique_id=898252351 instance=ExtResource("8_tile")]
 position = Vector2(605, 680)
 TileIndex = 10
 
-[node name="Tile11" parent="TilePoints" instance=ExtResource("8_tile")]
+[node name="Tile11" parent="TilePoints" unique_id=2032057569 instance=ExtResource("8_tile")]
 position = Vector2(605, 471)
 TileIndex = 11
 
