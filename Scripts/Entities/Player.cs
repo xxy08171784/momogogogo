@@ -293,15 +293,15 @@ public partial class Player : CharacterBody2D
 				GameState.TileCount
 			);
 
-		Marker2D targetNode =
-			tilePoints.GetNodeOrNull<Marker2D>(
-				$"Marker2D{normalizedTile}"
+		Node2D targetNode =
+			tilePoints.GetNodeOrNull<Node2D>(
+				$"Tile{normalizedTile}"
 			);
 
 		if (targetNode == null)
 		{
 			GD.PrintErr(
-				$"找不到 Marker2D{normalizedTile}，无法恢复玩家位置"
+				$"找不到 Tile{normalizedTile}，无法恢复玩家位置"
 			);
 
 			return;
@@ -419,12 +419,12 @@ public partial class Player : CharacterBody2D
 	// 受到伤害
 	// =========================
 
-	public int TakeDamage(int damage)
+	public int TakeDamage(int damage, out int absorbedByShield)
 	{
 		int safeDamage =
 			Mathf.Max(damage, 0);
 
-		int absorbedByShield =
+		absorbedByShield =
 			Mathf.Min(
 				GameState.Instance.PlayerShield,
 				safeDamage
@@ -506,15 +506,15 @@ public partial class Player : CharacterBody2D
 				(startPosition + i + 1)
 				% GameState.TileCount;
 
-			Marker2D targetNode =
-				tilePoints.GetNodeOrNull<Marker2D>(
-					$"Marker2D{nextTile}"
+			Node2D targetNode =
+				tilePoints.GetNodeOrNull<Node2D>(
+					$"Tile{nextTile}"
 				);
 
 			if (targetNode == null)
 			{
 				GD.PrintErr(
-					$"找不到 Marker2D{nextTile}"
+					$"找不到 Tile{nextTile}"
 				);
 
 				continue;

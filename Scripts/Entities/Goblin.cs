@@ -18,6 +18,10 @@ public partial class Goblin : Node2D
 	[Export(PropertyHint.Range, "0,999,1")]
 	public int Def { get; set; } = 0;
 
+	// 怪物护盾：破甲效果可忽略它。当前所有 Boss 占位为 0。
+	[Export(PropertyHint.Range, "0,999,1")]
+	public int Shield { get; set; } = 0;
+
 	public string DisplayName { get; private set; } = "哥布林兄弟";
 	public int CurrentHp { get; private set; }
 

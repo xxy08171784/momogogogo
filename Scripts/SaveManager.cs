@@ -184,6 +184,8 @@ public partial class SaveManager : Node
 		state.ChargeActive = false;
 		state.FreeActionsPending = 0;
 		state.NoCounterThisBattle = false;
+		state.ReflectShieldDamage = false;
+		state.IgnoreEnemyShield = false;
 		state.PlayerPosition = PosMod(data.Player.Position, GameState.TileCount);
 		state.DiceColor = data.Dice.SelectedColor == "blue" ? "blue" : "red";
 		state.Dice["red"] = data.Dice.RedValue;

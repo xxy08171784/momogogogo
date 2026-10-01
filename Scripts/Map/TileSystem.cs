@@ -11,12 +11,8 @@ public partial class TileSystem : Node2D
 	// 数值配置（每轮升级保持一致）
 	// =========================
 
-	private const int ArmorBreakBonusAtk = 2;    // 破甲：攻击 +2
-	private const int BastionBonusDef = 2;       // 坚守：防御 +2
-	private const int CounterFlatDamage = 3;     // 反击：伤害 +3
-	private const int HealingAmount = 4;         // 治疗：回血 +4
-	private const float ConvertHealRatio = 0.2f; // 嗜血/守护：20%
-	private const float ChargeMultiplier = 1.2f; // 蓄力：下回合攻击 ×120%
+	// 蓄力：下一回合攻击力总数 ×300%（其余升级数值见 Scripts/Tiles/Upgrades/）。
+	private const float ChargeMultiplier = 3.0f;
 
 	// =========================
 	// UI 布局常量
@@ -51,6 +47,11 @@ public partial class TileSystem : Node2D
 	private Button upgradeOptionB;
 	private Button upgradeOptionC;
 
+	// 当前升级面板抽出的选项（加权抽样结果），保证按钮索引与升级枚举一一对应。
+	private MapTileData.TileUpgrade[] currentUpgradeOptions;
+
+	private TileTooltip tooltip;
+
 	public override void _Ready()
 	{
 		chineseFont = GD.Load<Font>("res://Style/ChineseUIFont.tres");
@@ -63,10 +64,72 @@ public partial class TileSystem : Node2D
 		tilePoints = pointsNode;
 		rollButton = rollBtn;
 
+		SetupTileHover();
+
 		BuildTileUI();
 		BuildUpgradePanel();
 		RefreshAllTileUI();
 		SetPromptStates();
+	}
+
+	// =========================================================
+	// 地块悬浮提示
+	// =========================================================
+
+	private void SetupTileHover()
+	{
+		tooltip = new TileTooltip();
+		tooltip.Initialize(chineseFont);
+		AddChild(tooltip);
+
+		for (int i = 0; i < tiles.Count; i++)
+		{
+			Tile tile = tilePoints.GetNodeOrNull<Tile>($"Tile{i}");
+
+			if (tile == null)
+			{
+				GD.PrintErr($"TileSystem：找不到 Tile{i}，悬浮提示未接入");
+				continue;
+			}
+
+			int tileIndex = tile.TileIndex;
+
+			if (tileIndex < 0 || tileIndex >= tiles.Count)
+				continue;
+
+			tile.TileData = tiles[tileIndex];
+			tile.Hovered += OnTileHovered;
+			tile.Unhovered += OnTileUnhovered;
+		}
+	}
+
+	private void OnTileHovered(int tileIndex)
+	{
+		if (tileIndex < 0 || tileIndex >= tiles.Count)
+			return;
+
+		// 暂停 / 地块升级面板 / Boss 升级状态打开时，不显示悬浮。
+		if (GetTree().Paused)
+			return;
+
+		if (upgradePanel != null && upgradePanel.Visible)
+			return;
+
+		if (GameState.Instance.CurrentTurnState == GameState.TurnState.Upgrading)
+			return;
+
+		Node2D tileNode = tilePoints.GetNodeOrNull<Node2D>($"Tile{tileIndex}");
+
+		if (tileNode == null)
+			return;
+
+		tooltip.ShowFor(tiles[tileIndex], tileNode.GlobalPosition);
+	}
+
+	private void OnTileUnhovered(int tileIndex)
+	{
+		if (tooltip != null)
+			tooltip.Hide();
 	}
 
 	// =========================================================
@@ -83,13 +146,13 @@ public partial class TileSystem : Node2D
 		int tileIndex = state.PlayerPosition;
 		MapTileData tile = tiles[tileIndex];
 
-		// 消费上一回合的蓄力：本回合选红骰 → 攻击 ×1.2；选蓝骰 → 作废
+		// 消费上一回合的蓄力：本回合选红骰 → 攻击 ×3.0；选蓝骰 → 作废
 		if (state.ChargeActive)
 		{
 			if (state.DiceColor == "red")
 			{
 				state.AttackMultiplier = ChargeMultiplier;
-				GD.Print("蓄力生效：本回合攻击 ×120%");
+				GD.Print("蓄力生效：本回合攻击 ×300%");
 			}
 			else
 			{
@@ -197,103 +260,30 @@ public partial class TileSystem : Node2D
 		if (tile.UpgradeChoice == MapTileData.TileUpgrade.None)
 			return;
 
-		GameState state = GameState.Instance;
+		TileUpgradeEffect effect = TileUpgradeRegistry.Get(tile.UpgradeChoice);
 
-		switch (tile.UpgradeChoice)
-		{
-			// ---- 红格 ----
-			case MapTileData.TileUpgrade.ArmorBreak:
-				if (diceMatches)
-				{
-					state.TempAtk += ArmorBreakBonusAtk;
-					GD.Print($"破甲：本回合攻击 +{ArmorBreakBonusAtk}");
-				}
-				break;
-
-			case MapTileData.TileUpgrade.Bloodthirst:
-				if (diceMatches)
-				{
-					int totalAtk = TotalAttack();
-					int heal = Mathf.RoundToInt(totalAtk * ConvertHealRatio);
-					HealPlayer(heal);
-					GD.Print($"嗜血：本回合攻击 {totalAtk} 的 20% → 回复 {heal}");
-				}
-				break;
-
-			case MapTileData.TileUpgrade.Charge:
-				if (diceMatches)
-				{
-					state.SkipPlayerAttack = true;
-					state.ChargeActive = true;
-					GD.Print("蓄力：本回合不攻击，下一回合攻击 ×120%");
-				}
-				break;
-
-			// ---- 蓝格 ----
-			case MapTileData.TileUpgrade.Bastion:
-				if (diceMatches)
-				{
-					state.TempDef += BastionBonusDef;
-					GD.Print($"坚守：本回合防御 +{BastionBonusDef}");
-				}
-				break;
-
-			case MapTileData.TileUpgrade.Counter:
-				if (diceMatches)
-				{
-					state.FlatDamageBonus += CounterFlatDamage;
-					GD.Print($"反击：本回合伤害 +{CounterFlatDamage}");
-				}
-				break;
-
-			case MapTileData.TileUpgrade.Ward:
-				if (diceMatches)
-				{
-					int totalDef = TotalDefense();
-					int heal = Mathf.RoundToInt(totalDef * ConvertHealRatio);
-					HealPlayer(heal);
-					GD.Print($"守护：本回合防御 {totalDef} 的 20% → 回复 {heal}");
-				}
-				break;
-
-			// ---- 白格 ----
-			case MapTileData.TileUpgrade.Healing:
-				HealPlayer(HealingAmount);
-				GD.Print($"治疗：回复 {HealingAmount} 点生命");
-				break;
-
-			case MapTileData.TileUpgrade.Lucky:
-				// 幸运：本回合结算后，玩家可再行动一次；
-				// 下一次玩家行动时怪物不反击（免费行动）。
-				state.FreeActionsPending += 1;
-				GD.Print("幸运：踩中白格，获得一次免费行动（下次怪物不反击）");
-				break;
-		}
-	}
-
-	private static int TotalAttack()
-	{
-		GameState state = GameState.Instance;
-		float total = (state.PlayerAtk + state.TempAtk) * state.AttackMultiplier;
-		return Mathf.RoundToInt(total);
-	}
-
-	private static int TotalDefense()
-	{
-		GameState state = GameState.Instance;
-		return state.PlayerDef + state.TempDef;
-	}
-
-	private static void HealPlayer(int amount)
-	{
-		GameState state = GameState.Instance;
-
-		if (amount <= 0 || state.PlayerHp >= state.PlayerMaxHp)
+		if (effect == null)
 			return;
 
-		int healed = Mathf.Min(amount, state.PlayerMaxHp - state.PlayerHp);
-		state.PlayerHp += healed;
-		GD.Print($"回血 +{healed}，当前 HP {state.PlayerHp}/{state.PlayerMaxHp}");
+		effect.OnLanded(BuildEffectContext(tile, diceMatches));
+	}
+
+	private static TileEffectContext BuildEffectContext(MapTileData tile, bool diceMatches)
+	{
+		GameState state = GameState.Instance;
+
+		return new TileEffectContext
+		{
+			Tile = tile,
+			DiceMatched = diceMatches,
+			DiceColor = state.DiceColor,
+			RedValue = state.Dice["red"],
+			BlueValue = state.Dice["blue"],
+			// 第一批没有"选骰时判定"的效果，这里取落点值即可；
+			// 条件型到第二批再改为真正的"选骰时快照"。
+			HpAtSelection = state.PlayerHp,
+			MaxHpAtSelection = state.PlayerMaxHp
+		};
 	}
 
 	// =========================================================
@@ -311,7 +301,7 @@ public partial class TileSystem : Node2D
 				continue;
 			}
 
-			Marker2D marker = tilePoints.GetNode<Marker2D>($"Marker2D{i}");
+			Node2D marker = tilePoints.GetNode<Node2D>($"Tile{i}");
 			Vector2 origin = marker.Position + new Vector2(BarOffsetX, BarOffsetY);
 
 			// 5 小格进度条
@@ -539,15 +529,26 @@ public partial class TileSystem : Node2D
 			_ => "白色"
 		};
 
+		// 按权重抽 3 个不重复选项（第一批各色池不足 3 个时返回全部）。
+		TileUpgradeEffect[] picks = TileUpgradeRegistry.DrawWeighted(tile.Color, 3);
+
+		currentUpgradeOptions = new MapTileData.TileUpgrade[picks.Length];
+		(string, string)[] options = new (string, string)[picks.Length];
+
+		for (int i = 0; i < picks.Length; i++)
+		{
+			currentUpgradeOptions[i] = picks[i].Id;
+			options[i] = (picks[i].DisplayName, picks[i].Description);
+		}
+
 		upgradeTitleLabel.Text = $"选择{colorName}地块升级";
 		upgradeDescLabel.Text = $"{tileIndex + 1} 号地块 · 效果永久生效";
-
-		(string shortText, string tooltip)[] options = GetUpgradeOptions(tile.Color);
 
 		ConfigureOption(upgradeOptionA, options, 0);
 		ConfigureOption(upgradeOptionB, options, 1);
 		ConfigureOption(upgradeOptionC, options, 2);
 
+		tooltip?.Hide();
 		upgradePanel.Visible = true;
 		rollButton.Disabled = true;
 		SetPromptStates();
@@ -572,14 +573,15 @@ public partial class TileSystem : Node2D
 		if (upgradingTileIndex < 0)
 			return;
 
-		int index = upgradingTileIndex;
-		MapTileData tile = tiles[index];
-		MapTileData.TileUpgrade[] upgrades = GetUpgradeChoices(tile.Color);
-
-		if (optionIndex < 0 || optionIndex >= upgrades.Length)
+		if (currentUpgradeOptions == null
+			|| optionIndex < 0
+			|| optionIndex >= currentUpgradeOptions.Length)
 			return;
 
-		tile.UpgradeChoice = upgrades[optionIndex];
+		int index = upgradingTileIndex;
+		MapTileData tile = tiles[index];
+
+		tile.UpgradeChoice = currentUpgradeOptions[optionIndex];
 
 		CloseUpgradePanel();
 		RefreshTileUI(index);
@@ -600,63 +602,17 @@ public partial class TileSystem : Node2D
 		SetPromptStates();
 	}
 
-	// =========================
-	// 地块类型 → 升级选项
-	// =========================
+	// 地块类型 → 升级选项由 TileUpgradeRegistry 提供
+	//（各效果类自带 DisplayName / Description / Weight）。
 
-	private static MapTileData.TileUpgrade[] GetUpgradeChoices(MapTileData.TileColor color)
-	{
-		return color switch
-		{
-			MapTileData.TileColor.Red => new[]
-			{
-				MapTileData.TileUpgrade.ArmorBreak,
-				MapTileData.TileUpgrade.Bloodthirst,
-				MapTileData.TileUpgrade.Charge
-			},
-			MapTileData.TileColor.Blue => new[]
-			{
-				MapTileData.TileUpgrade.Bastion,
-				MapTileData.TileUpgrade.Counter,
-				MapTileData.TileUpgrade.Ward
-			},
-			MapTileData.TileColor.White => new[]
-			{
-				MapTileData.TileUpgrade.Healing,
-				MapTileData.TileUpgrade.Lucky
-			},
-			_ => Array.Empty<MapTileData.TileUpgrade>()
-		};
-	}
-
-	private static (string, string)[] GetUpgradeOptions(MapTileData.TileColor color)
-	{
-		return color switch
-		{
-			MapTileData.TileColor.Red => new[]
-			{
-				("破甲：攻击+2", "以后踩到该地块，攻击力 +2"),
-				("嗜血：攻击20%回血", "以后踩到该地块，本回合攻击力 20% 转为回复"),
-				("蓄力：下回合攻击×120%", "以后踩到该地块，本回合不攻击，下一回合攻击 ×120%（选蓝骰失效）")
-			},
-			MapTileData.TileColor.Blue => new[]
-			{
-				("坚守：防御+2", "以后踩到该地块，防御力 +2"),
-				("反击：伤害+3", "以后踩到该地块，伤害 +3"),
-				("守护：防御20%回血", "以后踩到该地块，本回合防御力 20% 转为回复")
-			},
-			MapTileData.TileColor.White => new[]
-			{
-				("治疗：回血+4", "以后踩到该地块，回血 +4"),
-				("幸运：额外再掷一次", "以后踩到该地块，获得二次投掷骰子的机会")
-			},
-			_ => Array.Empty<(string, string)>()
-		};
-	}
 
 	// Map 每次切换回合状态时调用，用于刷新"升级"按钮可点击状态。
 	public void OnTurnStateChanged(GameState.TurnState newState)
 	{
+		// 非待机状态（战斗/升级/Boss 升级面板等）时收起悬浮，避免残留。
+		if (newState != GameState.TurnState.ReadyToRoll)
+			tooltip?.Hide();
+
 		SetPromptStates();
 		TryAutoOpenUpgrade(newState);
 	}

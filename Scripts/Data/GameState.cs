@@ -51,12 +51,19 @@ public partial class GameState : Node
 	// 幸运：本回合战斗怪物不反击（玩家行动开始时由 FreeActionsPending 提升而来）
 	public bool NoCounterThisBattle;
 
+	// 反击：本回合敌人打在护盾上的伤害反弹给敌人
+	public bool ReflectShieldDamage;
+	// 破甲：本回合无视怪物护盾
+	public bool IgnoreEnemyShield;
+
 	// 每次地块结算前调用，清掉上一回合遗留的战斗修正。
 	public void ResetTileTurnModifiers()
 	{
 		FlatDamageBonus = 0;
 		SkipPlayerAttack = false;
 		AttackMultiplier = 1f;
+		ReflectShieldDamage = false;
+		IgnoreEnemyShield = false;
 	}
 
 	public int PlayerPosition { get; set; }
@@ -91,6 +98,8 @@ public partial class GameState : Node
 		ChargeActive = false;
 		FreeActionsPending = 0;
 		NoCounterThisBattle = false;
+		ReflectShieldDamage = false;
+		IgnoreEnemyShield = false;
 		PlayerPosition = 0;
 		CurrentTurnState = TurnState.ReadyToRoll;
 		DiceColor = "red";
