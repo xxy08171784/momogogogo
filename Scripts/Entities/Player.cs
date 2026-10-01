@@ -486,6 +486,14 @@ public partial class Player : CharacterBody2D
 	// 根据步数移动
 	// =========================
 
+	// =========================
+	// 移动手感（秒）：越小走得越快。
+	// 单格移动时长 + 格间停顿，每格总耗时 ≈ 两者之和。
+	// =========================
+
+	private const double TileMoveDuration = 0.3;
+	private const double TileMovePause = 0.05;
+
 	public async Task<int> MoveBySteps(int steps)
 	{
 		int targetTile =
@@ -564,7 +572,7 @@ public partial class Player : CharacterBody2D
 				this,
 				"global_position",
 				targetNode.GlobalPosition,
-				0.5
+				TileMoveDuration
 			);
 
 			await ToSignal(
@@ -573,7 +581,7 @@ public partial class Player : CharacterBody2D
 			);
 
 			await ToSignal(
-				GetTree().CreateTimer(0.2),
+				GetTree().CreateTimer(TileMovePause),
 				SceneTreeTimer.SignalName.Timeout
 			);
 		}

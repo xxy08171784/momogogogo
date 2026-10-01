@@ -65,7 +65,6 @@ public static class TileDescription
 			$"{ColorName(tile.Color)}\n" +
 			$"{TriggerText(tile.Color)}\n" +
 			$"{ProgressText(tile)}\n" +
-			"\n" +
 			BaseEffectText(tile);
 
 		if (tile.UpgradeChoice != MapTileData.TileUpgrade.None)

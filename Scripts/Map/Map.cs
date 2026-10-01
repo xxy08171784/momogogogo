@@ -422,8 +422,6 @@ public partial class Map : Node2D
 			$"第 {bossRushSystem.CurrentBossNumber} / {bossRushSystem.BossCount} 只\n" +
 			$"{goblin.DisplayName}\n" +
 			$"HP = {goblin.CurrentHp} / {goblin.MaxHp}\n" +
-			$"攻击 = {goblin.Atk}    防御 = {goblin.Def}\n" +
-			$"行动 {goblin.CurrentActionIndex + 1}/{goblin.ActionCount}：{action.Name}\n" +
 			$"{action.Description}" +
 			chargeText +
 			shieldText +
