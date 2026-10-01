@@ -55,8 +55,8 @@ offset_top = 30.0
 offset_right = 1260.0
 offset_bottom = 72.0
 mouse_filter = 2
-max_value = 30.0
-value = 30.0
+max_value = 33.0
+value = 33.0
 show_percentage = false
 
 [node name="HpLabel" type="Label" parent="UI/PlayerHealthBar" unique_id=690292921]
@@ -68,15 +68,15 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 24
-text = "玩家 HP  30 / 30"
+text = "玩家 HP  33 / 33"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="PlayerStatsPanel" type="ColorRect" parent="UI" unique_id=276201252]
 offset_left = 1285.0
 offset_top = 24.0
-offset_right = 1585.0
-offset_bottom = 154.0
+offset_right = 1510.0
+offset_bottom = 166.0
 mouse_filter = 2
 color = Color(0.035, 0.045, 0.06, 0.82)
 
@@ -84,20 +84,20 @@ color = Color(0.035, 0.045, 0.06, 0.82)
 layout_mode = 0
 offset_left = 14.0
 offset_top = 7.0
-offset_right = 286.0
-offset_bottom = 108.0
+offset_right = 179.0
+offset_bottom = 133.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 20
 text = "玩家属性
-攻击 = 3
-防御 = 1
-护盾 = 0 / 3"
+攻击 = 2
+防御 = 0
+护盾 = 0"
 
 [node name="GoblinStatsPanel" type="ColorRect" parent="UI" unique_id=747507262]
-offset_left = 1080.0
-offset_top = 571.0
-offset_right = 1226.0
-offset_bottom = 778.0
+offset_left = 1073.0
+offset_top = 567.0
+offset_right = 1223.0
+offset_bottom = 777.0
 mouse_filter = 2
 color = Color(0.09, 0.035, 0.035, 0.84)
 
@@ -106,14 +106,14 @@ custom_minimum_size = Vector2(1, 1)
 layout_mode = 0
 offset_left = 12.0
 offset_top = 8.0
-offset_right = 184.0
-offset_bottom = 208.0
+offset_right = 157.0
+offset_bottom = 200.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 18
 text = "第 1 / 5 只
 史莱姆
 HP = 15 / 15
-攻击 = 2
+攻击 = 3
 防御 = 0"
 autowrap_mode = 2
 
@@ -144,7 +144,7 @@ offset_right = 670.0
 offset_bottom = 130.0
 theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
 theme_override_font_sizes/font_size = 20
-text = "当前：HP 30/30    攻击 3    防御 1"
+text = "当前：HP 33/33    攻击 2    防御 0"
 horizontal_alignment = 1
 
 [node name="AttackButton" type="Button" parent="UI/UpgradePanel" unique_id=1172901166]
@@ -153,7 +153,7 @@ offset_left = 55.0
 offset_top = 165.0
 offset_right = 245.0
 offset_bottom = 280.0
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 18
 text = "攻击 +1"
 
 [node name="DefenseButton" type="Button" parent="UI/UpgradePanel" unique_id=1161606517]
@@ -162,7 +162,7 @@ offset_left = 255.0
 offset_top = 165.0
 offset_right = 445.0
 offset_bottom = 280.0
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 18
 text = "防御 +1"
 
 [node name="HpButton" type="Button" parent="UI/UpgradePanel" unique_id=196774528]
@@ -171,7 +171,7 @@ offset_left = 455.0
 offset_top = 165.0
 offset_right = 645.0
 offset_bottom = 280.0
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 18
 text = "最大生命 +5"
 
 [node name="TileLevelLabels" type="Node2D" parent="." unique_id=850215940]

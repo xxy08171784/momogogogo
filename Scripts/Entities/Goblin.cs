@@ -21,6 +21,8 @@ public partial class Goblin : Node2D
 
 	public string DisplayName { get; private set; } = "哥布林兄弟";
 	public int CurrentHp { get; private set; }
+	public int CurrentShield { get; private set; }
+	public int PowerBonus { get; private set; }
 	public int CurrentActionIndex { get; private set; }
 	public int NextAttackMultiplier { get; private set; } = 1;
 	public int ActionCount => actions.Length;
@@ -29,6 +31,7 @@ public partial class Goblin : Node2D
 	private Label hpLabel;
 	private AnimationPlayer animationPlayer;
 	private MonsterAction[] actions = Array.Empty<MonsterAction>();
+	private int actionLoopStartIndex;
 
 	public override void _Ready()
 	{
@@ -46,14 +49,20 @@ public partial class Goblin : Node2D
 		int maxHp,
 		int atk,
 		int def,
-		MonsterAction[] monsterActions)
+		MonsterAction[] monsterActions,
+		int loopStartIndex)
 	{
 		DisplayName = displayName;
 		MaxHp = Mathf.Max(maxHp, 1);
 		Atk = Mathf.Max(atk, 0);
 		Def = Mathf.Max(def, 0);
 		CurrentHp = MaxHp;
+		CurrentShield = 0;
+		PowerBonus = 0;
 		actions = monsterActions ?? Array.Empty<MonsterAction>();
+		actionLoopStartIndex = actions.Length == 0
+			? 0
+			: Mathf.Clamp(loopStartIndex, 0, actions.Length - 1);
 		CurrentActionIndex = 0;
 		NextAttackMultiplier = 1;
 
@@ -83,7 +92,9 @@ public partial class Goblin : Node2D
 		if (actions.Length == 0)
 			return;
 
-		CurrentActionIndex = (CurrentActionIndex + 1) % actions.Length;
+		CurrentActionIndex += 1;
+		if (CurrentActionIndex >= actions.Length)
+			CurrentActionIndex = actionLoopStartIndex;
 	}
 
 	public void SetNextAttackMultiplier(int multiplier)
@@ -110,11 +121,28 @@ public partial class Goblin : Node2D
 		return actualHeal;
 	}
 
+	public int GainShield(int amount)
+	{
+		int gained = Mathf.Max(amount, 0);
+		CurrentShield += gained;
+		return gained;
+	}
+
+	public int GainPower(int amount)
+	{
+		int gained = Mathf.Max(amount, 0);
+		PowerBonus += gained;
+		return gained;
+	}
+
 	public int TakeDamage(int damage)
 	{
 		int safeDamage = Mathf.Max(damage, 0);
+		int absorbedByShield = Mathf.Min(CurrentShield, safeDamage);
+		CurrentShield -= absorbedByShield;
+		int hpDamage = safeDamage - absorbedByShield;
 		int previousHp = CurrentHp;
-		CurrentHp = Mathf.Max(CurrentHp - safeDamage, 0);
+		CurrentHp = Mathf.Max(CurrentHp - hpDamage, 0);
 		int actualDamage = previousHp - CurrentHp;
 
 		UpdateHealthDisplay();
@@ -123,7 +151,7 @@ public partial class Goblin : Node2D
 		if (previousHp > 0 && CurrentHp == 0)
 			EmitSignal(SignalName.Died);
 
-		return actualDamage;
+		return absorbedByShield + actualDamage;
 	}
 
 	// 读档专用：恢复 Boss 剩余生命，不触发死亡动画。
@@ -134,7 +162,11 @@ public partial class Goblin : Node2D
 		EmitSignal(SignalName.HpChanged, CurrentHp, MaxHp);
 	}
 
-	public void RestoreCombatState(int actionIndex, int nextAttackMultiplier)
+	public void RestoreCombatState(
+		int actionIndex,
+		int nextAttackMultiplier,
+		int currentShield,
+		int powerBonus)
 	{
 		if (actions.Length == 0)
 		{
@@ -146,6 +178,8 @@ public partial class Goblin : Node2D
 		}
 
 		NextAttackMultiplier = Mathf.Max(nextAttackMultiplier, 1);
+		CurrentShield = Mathf.Max(currentShield, 0);
+		PowerBonus = Mathf.Max(powerBonus, 0);
 	}
 
 	public bool IsDead() => CurrentHp <= 0;

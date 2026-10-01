@@ -170,9 +170,7 @@ public partial class TileSystem : Node2D
 
 		if (state.PlayerHp < state.PlayerMaxHp)
 		{
-			int missing = state.PlayerMaxHp - state.PlayerHp;
-			int heal = Mathf.Min(tile.Value, missing);
-			state.PlayerHp += heal;
+			int heal = state.HealPlayer(tile.Value);
 			GD.Print($"踩中空白格：回复 {heal} 点生命（地块当前回血值 {tile.Value}）");
 			return;
 		}
@@ -281,7 +279,7 @@ public partial class TileSystem : Node2D
 	private static int TotalDefense()
 	{
 		GameState state = GameState.Instance;
-		return state.PlayerDef + state.TempDef;
+		return state.GetEffectiveDefense();
 	}
 
 	private static void HealPlayer(int amount)
@@ -291,8 +289,7 @@ public partial class TileSystem : Node2D
 		if (amount <= 0 || state.PlayerHp >= state.PlayerMaxHp)
 			return;
 
-		int healed = Mathf.Min(amount, state.PlayerMaxHp - state.PlayerHp);
-		state.PlayerHp += healed;
+		int healed = state.HealPlayer(amount);
 		GD.Print($"回血 +{healed}，当前 HP {state.PlayerHp}/{state.PlayerMaxHp}");
 	}
 

@@ -14,6 +14,9 @@ public sealed class MonsterAction
 	// 怪物在本回合行动阶段回复的生命。
 	public int Heal { get; init; }
 
+	// 怪物在行动阶段获得的护盾，持续到被消耗。
+	public int ShieldGain { get; init; }
+
 	// 玩家攻击命中后受到的真实反伤：无视防御和护盾。
 	public int ReflectTrueDamage { get; init; }
 
@@ -25,4 +28,10 @@ public sealed class MonsterAction
 
 	// 玩家当前 HP < 10 时，本行动的治疗量翻倍。
 	public bool DoubleHealWhenPlayerLow { get; init; }
+
+	// 永久提高怪物之后所有伤害。
+	public int PowerGain { get; init; }
+
+	// 仅 Boss 首回合使用：玩家防御与回血效果永久降低 50%。
+	public bool ApplyBlackDomain { get; init; }
 }

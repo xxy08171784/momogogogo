@@ -5,7 +5,7 @@ using System.Text.Json;
 
 public partial class SaveManager : Node
 {
-	public const int CurrentSaveVersion = 3;
+	public const int CurrentSaveVersion = 4;
 
 	// 全局访问点，其他脚本通过 SaveManager.Instance 调用
 	public static SaveManager Instance { get; private set; }
@@ -63,7 +63,9 @@ public partial class SaveManager : Node
 		int bossIndex,
 		int bossCurrentHp,
 		int bossActionIndex,
-		int bossNextAttackMultiplier)
+		int bossNextAttackMultiplier,
+		int bossCurrentShield,
+		int bossPowerBonus)
 	{
 		if (GameState.Instance == null || bossIndex < 0 || bossCurrentHp <= 0)
 			return false;
@@ -88,7 +90,13 @@ public partial class SaveManager : Node
 					Position = state.PlayerPosition,
 					SkipMovementNextTurn = state.SkipMovementNextTurn,
 					ChargeActive = state.ChargeActive,
-					FreeActionsPending = state.FreeActionsPending
+					FreeActionsPending = state.FreeActionsPending,
+					RedDiceAtkBonus = state.RedDiceAtkBonus,
+					BlueDiceDefBonus = state.BlueDiceDefBonus,
+					DoubleDiceResonanceBonus = state.DoubleDiceResonanceBonus,
+					LifestealHealAmount = state.LifestealHealAmount,
+					TurnStartShieldAmount = state.TurnStartShieldAmount,
+					BlackDomainApplied = state.BlackDomainApplied
 				},
 				Dice = new DiceSaveData
 				{
@@ -101,7 +109,9 @@ public partial class SaveManager : Node
 					Index = bossIndex,
 					CurrentHp = bossCurrentHp,
 					ActionIndex = bossActionIndex,
-					NextAttackMultiplier = Math.Max(bossNextAttackMultiplier, 1)
+					NextAttackMultiplier = Math.Max(bossNextAttackMultiplier, 1),
+					CurrentShield = Math.Max(bossCurrentShield, 0),
+					PowerBonus = Math.Max(bossPowerBonus, 0)
 				}
 			};
 
@@ -168,7 +178,9 @@ public partial class SaveManager : Node
 		if (data == null || data.Player == null || data.Dice == null || data.Boss == null || data.Tiles == null)
 			return false;
 
-		if (data.Version <= 0 || data.Version > CurrentSaveVersion)
+		// V4 开始重做了角色升级池、怪物行动循环和黑化领域。
+		// 旧版本中的行动序号/状态含义已经不兼容，因此不继续迁移旧测试存档。
+		if (data.Version != CurrentSaveVersion)
 			return false;
 
 		if (data.Tiles.Count != tileCount || data.Boss.Index < 0 || data.Boss.CurrentHp <= 0)
@@ -186,6 +198,16 @@ public partial class SaveManager : Node
 		state.PlayerAtk = Math.Max(data.Player.Atk, 0);
 		state.PlayerDef = Math.Max(data.Player.Def, 0);
 		state.PlayerShield = Math.Clamp(data.Player.Shield, 0, GameState.MaxShield);
+		state.PlayerTurnShield = 0;
+		state.RedDiceAtkBonus = Math.Max(data.Player.RedDiceAtkBonus, 0);
+		state.BlueDiceDefBonus = Math.Max(data.Player.BlueDiceDefBonus, 0);
+		state.DoubleDiceResonanceBonus = Math.Max(data.Player.DoubleDiceResonanceBonus, 0);
+		state.LifestealHealAmount = Math.Max(data.Player.LifestealHealAmount, 0);
+		state.TurnStartShieldAmount = Math.Max(data.Player.TurnStartShieldAmount, 0);
+		state.LifestealUsedThisTurn = false;
+		state.BlackDomainApplied = data.Player.BlackDomainApplied;
+		state.DefenseEffectMultiplier = state.BlackDomainApplied ? 0.5f : 1f;
+		state.HealingEffectMultiplier = state.BlackDomainApplied ? 0.5f : 1f;
 		state.TempAtk = 0;
 		state.TempDef = 0;
 		state.FlatDamageBonus = 0;

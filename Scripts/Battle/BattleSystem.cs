@@ -28,7 +28,7 @@ public partial class BattleSystem : Node
 			Mathf.RoundToInt(basePlayerAttack * state.AttackMultiplier),
 			0
 		);
-		int playerDefense = Mathf.Max(state.PlayerDef + state.TempDef, 0);
+		int playerDefense = state.GetEffectiveDefense();
 		int effectiveEnemyDefense = Mathf.Max(enemy.Def + action.DamageReduction, 0);
 
 		GD.Print(
@@ -48,6 +48,21 @@ public partial class BattleSystem : Node
 			await player.PlayAttackAnimation();
 			int actualDamageToEnemy = enemy.TakeDamage(damageToEnemy);
 			await enemy.PlayHitAnimation();
+
+			if (
+				actualDamageToEnemy > 0
+				&& state.LifestealHealAmount > 0
+				&& !state.LifestealUsedThisTurn
+			)
+			{
+				state.LifestealUsedThisTurn = true;
+				int healed = state.HealPlayer(state.LifestealHealAmount);
+				if (healed > 0)
+				{
+					player.PlayHealSound();
+					GD.Print($"嗜血：造成伤害后回复 {healed} 点生命");
+				}
+			}
 
 			if (action.ReflectTrueDamage > 0 && actualDamageToEnemy > 0)
 			{
@@ -99,12 +114,14 @@ public partial class BattleSystem : Node
 		if (action.Damage > 0)
 		{
 			int attackMultiplier = enemy.ConsumeNextAttackMultiplier();
-			int rawDamage = action.Damage * attackMultiplier;
+			int rawDamage =
+				(action.Damage + enemy.PowerBonus)
+				* attackMultiplier;
 			int damageAfterDefense = Mathf.Max(rawDamage - playerDefense, 0);
 
 			GD.Print(
 				$"{enemy.DisplayName} 使用 {action.Name}：" +
-				$"{action.Damage} x {attackMultiplier} - 玩家 DEF {playerDefense}" +
+				$"({action.Damage}+力量{enemy.PowerBonus}) x {attackMultiplier} - 玩家有效DEF {playerDefense}" +
 				$" = {damageAfterDefense} 点待结算伤害"
 			);
 
@@ -114,7 +131,7 @@ public partial class BattleSystem : Node
 
 			GD.Print(
 				$"玩家实际损失 {hpDamage} 点生命，" +
-				$"HP={state.PlayerHp}，护盾={state.PlayerShield}"
+				$"HP={state.PlayerHp}，护盾={state.TotalPlayerShield}"
 			);
 		}
 
@@ -137,6 +154,30 @@ public partial class BattleSystem : Node
 			GD.Print(
 				$"{enemy.DisplayName} 使用 {action.Name}：下一次攻击 x{action.ChargeMultiplier}"
 			);
+		}
+
+		if (action.ShieldGain > 0)
+		{
+			int gained = enemy.GainShield(action.ShieldGain);
+			GD.Print(
+				$"{enemy.DisplayName} 使用 {action.Name}：获得 {gained} 点护盾，" +
+				$"当前护盾={enemy.CurrentShield}"
+			);
+		}
+
+		if (action.PowerGain > 0)
+		{
+			int gained = enemy.GainPower(action.PowerGain);
+			GD.Print(
+				$"{enemy.DisplayName} 使用 {action.Name}：力量 +{gained}，" +
+				$"当前力量={enemy.PowerBonus}"
+			);
+		}
+
+		if (action.ApplyBlackDomain)
+		{
+			state.ApplyBlackDomain();
+			GD.Print("黑化领域：玩家防御与生命回复效果永久降低50%");
 		}
 
 		if (action.LockPlayerNextTurn)

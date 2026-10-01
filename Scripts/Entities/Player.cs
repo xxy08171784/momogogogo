@@ -424,17 +424,29 @@ public partial class Player : CharacterBody2D
 		int safeDamage =
 			Mathf.Max(damage, 0);
 
+		int absorbedByTurnShield =
+			Mathf.Min(
+				GameState.Instance.PlayerTurnShield,
+				safeDamage
+			);
+
+		GameState.Instance.PlayerTurnShield -=
+			absorbedByTurnShield;
+
+		int remainingAfterTurnShield =
+			safeDamage - absorbedByTurnShield;
+
 		int absorbedByShield =
 			Mathf.Min(
 				GameState.Instance.PlayerShield,
-				safeDamage
+				remainingAfterTurnShield
 			);
 
 		GameState.Instance.PlayerShield -=
 			absorbedByShield;
 
 		int remainingDamage =
-			safeDamage - absorbedByShield;
+			remainingAfterTurnShield - absorbedByShield;
 
 		int previousHp =
 			GameState.Instance.PlayerHp;
@@ -445,10 +457,11 @@ public partial class Player : CharacterBody2D
 				0
 			);
 
-		if (absorbedByShield > 0)
+		int totalAbsorbed = absorbedByTurnShield + absorbedByShield;
+		if (totalAbsorbed > 0)
 		{
 			GD.Print(
-				$"护盾抵消 {absorbedByShield} 点伤害，剩余护盾 {GameState.Instance.PlayerShield}/{GameState.MaxShield}"
+				$"护盾抵消 {totalAbsorbed} 点伤害，剩余总护盾 {GameState.Instance.TotalPlayerShield}"
 			);
 		}
 
@@ -642,11 +655,7 @@ public partial class Player : CharacterBody2D
 				GameState.Instance.PlayerMaxHp +=
 					amount;
 
-				GameState.Instance.PlayerHp =
-					Mathf.Min(
-						GameState.Instance.PlayerHp + amount,
-						GameState.Instance.PlayerMaxHp
-					);
+				GameState.Instance.HealPlayer(amount);
 
 				// 播放回血音效
 				PlayHealSound();
